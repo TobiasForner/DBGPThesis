@@ -1,0 +1,692 @@
+\documentclass[xcolor=dvipsnames, tikz, 11pt]{article}
+%\documentclass{beamer}
+\usepackage[left=3cm,right=3cm,top=2cm,bottom=2cm]{geometry} % page settings
+\usepackage{amsmath} % provides many mathematical environments & tools
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{textcomp}
+\usepackage{pgf}
+\usepackage{pgfgantt}
+\usepackage{pgfplots}\pgfplotsset{compat=1.3}
+\usepackage{setspace}
+\usepackage[colorlinks,linkcolor=ForestGreen,citecolor=ForestGreen]{hyperref}
+\usepackage[nameinlink, capitalize]{cleveref} %used for cross theorem references
+\setlength{\parindent}{5mm}
+\usepackage[english]{babel}
+%\usepackage{algpseudocode}
+
+%\algnewcommand\algorithmicforeach{\textbf{for each}}
+%\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+
+\usepackage{tikz}%used for examples for problems in earlier analysis
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\usepackage{tabularx,ragged2e}%used for tables with long text in some columns
+\newcolumntype{C}{>{\arraybackslash}X}%column type that supports long texts, i.e. text across multiple lines
+\setlength\extrarowheight{3pt}
+
+\crefname{lemma}{Lemma}{Lemmas}
+\crefname{figure}{Figure}{Figure}
+
+% !TeX spellcheck=en_GB
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\nl}{\newline}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\red}[1]{\textcolor{purple}{#1}}
+
+\newcommand{\crep}{C{\scriptsize REP}}
+\newcommand{\size}{\text{\scriptsize SIZE}}
+\newcommand{\optmig}{\text{\scriptsize OPT-MIG}}
+\newcommand{\del}{\text{\scriptsize DEL}}
+\newcommand{\ovr}{\text{\scriptsize OVR}}
+\newcommand{\final}{\text{\scriptsize FINAL}}
+\newcommand{\opt}{\text{O{\scriptsize PT}}}
+
+%commands for input sequence diagrams
+\newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
+%\newcommand{\request}[3]{\addplot coordinates{(#3,#1) (#3,#2)};}
+%\newcommand{\request}[3]{\draw (#3,#1) -- (#3,#2);}
+
+\theoremstyle{definition}
+\newtheorem{defi}{Definition}
+\newtheorem{theo}[defi]{Theorem}
+\newtheorem{lemma}[defi]{Lemma}
+\newtheorem{bsp}[defi]{Example}
+\newtheorem{coro}[defi]{Corollary}
+\newtheorem{fact}[defi]{Fact}
+
+
+
+%TODO find out journal or equivalent for some references
+
+\begin{document}
+	
+	\title{Thesis}
+	\author{Tobias Forner}
+	\date{\today}
+	\maketitle
+%plots for evaluation data, decomp tree with regular alpha
+	%TODO put in real data
+	% A - 
+	% B - cesar nekbone First300k
+	% C -
+	% D - 
+	%total cost
+	%TODO run decomp tree again for cesar nekboe
+	\pgfplotstableread[row sep=\\,col sep=&]{
+		database & decomposition & ParMetis & Static            \\
+		A		 & 153223	 	 & 254994.20000  & 54919.400000 \\
+		B		 & 313985.600000 & 263278.400000 & 57454.200000 \\
+		C 		 & 295830.800000 & 173940.200000 & 14950.400000 \\
+		%D		 & 100			 & 80 			 & 50			\\
+	}\totalcostplot
+	
+	%communication cost
+	\pgfplotstableread[row sep=\\,col sep=&]{
+		database & decomposition & ParMetis & Static 			\\
+		A		 & 55375.2		 & 93641.000000 & 48947.000000	\\
+		B		 & 119710.400000 & 56231.600000 & 51519.000000	\\
+		C		 & 110112.800000 & 59455.400000 & 9242.000000	\\
+		%D 		 & 100			 & 80 			& 50			\\
+	}\commcostplot
+	
+	%migration cost
+	\pgfplotstableread[row sep=\\,col sep=&]{
+		database & decomposition & ParMetis 	 & Static 		\\
+		A		 & 97848		 & 161353.200000 & 5972.400000	\\
+		B		 & 194275.200000 & 207046.800000 & 5935.200000	\\
+		C		 & 185718.000000 & 114484.800000 & 5708.400000	\\
+		%D		 & 100			 & 80 			 & 50			\\
+	}\migcostplot
+	
+	%running time in ms
+	\pgfplotstableread[row sep=\\,col sep=&]{
+		database & decomposition 	& ParMetis		& Static		\\
+		A		 & 102254			& 61374.6 		& 2588.399902	\\
+		B		 & 622934.000000	& 32851.800781	& 2489.399902	\\
+		C		 & 428089.812500	& 42036.601562	& 2460.399902	\\
+		%D 		 & 100				& 80 			& 50			\\
+	}\runtimeplot
+	
+	
+	\section{Problem Definition}
+	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $k$ parts, each of size $l$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.\nl More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.\nl
+	We are in the realm of competitive analysis and as a result we compare an online algorithm ON to the optimal offline algorithm \opt{}. ON only learns of the requests in the input sequence $\sigma$ as they happen and as a result only knows about the partial sequence $(u_1,v_1),...,(u_t,v_t)$ at time $t$ while \opt{} starts with perfect knowledge of the complete sequence $\sigma$ at time $0$.\nl
+	The goal is to design an online algorithm ALG with a good competitive ratio with regard to \opt{} defined as follows.\nl
+	A online algorithm ON is $\rho-competitive$ if there exists a constant $\beta$ such that \begin{align*}
+	ALG(\sigma)\leq\rho\cdot \opt{}(\sigma)+\beta\forall \sigma
+	\end{align*} 
+	where $ALG(\sigma)$ and $\opt{}(\sigma)$ denote the cost of serving input sequence $\sigma$ of ALG and \opt{} respectively.\nl
+	Often we allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\times n/k$ nodes to each server where $\delta>1$.%TODO possibly mention that the algorithm is compared against an offline algorithm without augmentation, i.e. with the default capacities.
+	
+	\section{Related Work}
+	\subsection{Dynamic Balanced RePartitioning}
+	%TODO adapt if current problems cant be resolved
+	Avin et al.\cite{Avin2015a} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is at the core of this also the topic of this thesis. We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. %While they gave a competitive algorithm, their approach could not be used for an actual implementation as they did not provide a polynomial-time implementation. In this thesis we will show an adaptation of their algorithm \crep{} which both preserves the initial competitive ratio and can also be performed in polynomial time.\nl
+	
+	\subsection{Learning Variant of BRP}
+	%TODO also have a look at Competitive clustering of stochastic communication patterns on a ring
+	\cite{Henzinger2019} studies a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.\nl
+	\cite{Henzinger2019} present an algorithm for the case where the number of servers is $l=2$ that achieves a competitive ratio of $O((\log n)/\epsilon)$ with augmentation $\epsilon$, i.e. each server has capacity $(1+\epsilon)n/2$ for $\epsilon\in(0,1)$.\nl
+	For the general case of $l$ servers of capacity $(1+\epsilon)n/2$ the authors construct an exponential-time algorithm that achieves a competitive ratio of $\O((l\log n \log l)/\epsilon)$ for $\epsilon\in(0,1/2)$ and also provide a distributed version.\nl
+	Additionally the authors describe a polynomial-time $O((l^2\log n\log l)/\epsilon^2)$-competitive algorithm for the case with general $l$, servers of capacity $(1+\epsilon)n/l$ and $\epsilon\in(0,1/2)$.\nl
+	It is important to stress that the assumption that the requests reveal a perfect partitioning of the communication nodes is not applicable for most practical applications and thus it is important to study the general BRP problem without restricting $\sigma$.
+	
+	
+	\section{Problems With Analysis in Previous Work}
+	\label{flawsSection}
+	The problem in the analysis of \cite{Avin2015a} arises due to their usage of the concept of $F(c)$: This contains only edges incident to components from $S(c)$ that arrived after the involved components from $S(c)$ were created by \crep{}.In the analysis it is assumed that only those edges that are contained in $F(c)$ can contribute to the creation of component $c$. As we will show that is not the case and as a result it is very challenging to separate the costs of \opt{} that are due to the requests that actually led to the creation of $c$.\nl
+	In order for the approach in \cite{Avin2015a} to work the different sets $F(c)$ that occur as \crep{} handles input $\sigma$ need to form a partition of all requests such that each request can be mapped to one unique set $F(c)$. Only in this case it is possible to lower bound the cost of \crep{} via the requests in $\bigcup_{c\in\del{}}F(c)$.\nl
+	\cref{exNewCrep} shows an example sequence of requests for which this approach does not work. The diagram shows horizontal lines, each representing one of the vertices. A vertical line represents a communication request between its end points. For example the sequence shown contains a communication request between nodes 1 and 2 at time $t=5$.\nl
+	In this sequence the first two requests are not contained in $F(c)$ for any component $c$ as nodes 3 and 4 were part of other components that were eventually deleted by \crep{} before finally being merged at time $t=15$.\nl
+	
+	\begin{figure}
+		\begin{tikzpicture}
+		\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=4.5, axis lines=left, xlabel= time, ylabel= nodes]
+		%nodes
+		\addplot[domain=0:20, dashed] {1};
+		\addplot[domain=0:20, dashed] {2};
+		\addplot[domain=0:20, dashed] {3};
+		\addplot[domain=0:20, dashed] {4};
+		
+		%requests
+		\request{4}{3}{1}
+		\request{4}{3}{2}
+		\request{1}{2}{3}
+		\request{1}{2}{4}
+		\request{1}{2}{5}
+		\request{2}{3}{6}
+		\request{2}{3}{7}
+		\request{2}{3}{8}
+		\request{1}{2}{9}
+		\request{1}{2}{10}
+		\request{1}{2}{11}
+		\request{2}{4}{12}
+		\request{2}{4}{13}
+		\request{2}{4}{14}
+		\request{4}{3}{15}
+		\end{axis}
+		
+		
+		\end{tikzpicture}
+		\caption{problem in the new version}\label{exNewCrep}	
+	\end{figure}
+	
+	In an older version (\cite{Avin2015}) of the paper mentioned above we have also discovered some problems. In this version merges and the component structure is very similar, but upon a deletion of a component the algorithm not only deletes inner edges but also those that leave the component, i.e. all edges $e={u,v}$ are deleted where $u$ or $v$ are inside the component. However the additional deletions of edges that are leaving the component are not accounted for in the analysis. We show that this approach may lead to scenarios where the amount of edges that are deleted that leave the component may greatly exceed the amount of inner edges. Just like in the case above this fact makes it very challenging to attribute specific costs to \opt{} as this makes it very difficult to uniquely identify the actions of \opt{} that may lead to a reduction of communication costs with a given component that \crep{} discovers during its execution. This complicates the analysis to the extent that we have not been able to rectify it.\nl
+	\cref{exOldCrep} illustrates an example of the problems mentioned above for this older version of \crep{}. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \crep{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until that node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence. 
+
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=7.5, axis lines=left, xlabel = time, ylabel = nodes]
+	%nodes
+	\addplot[domain=0:20, dashed] {1};
+	\addplot[domain=0:20, dashed] {2};
+	\addplot[domain=0:20, dashed] {3};
+	\addplot[domain=0:20, dashed] {4};
+	\addplot[domain=0:20, dashed] {5};
+	\addplot[domain=0:20, dashed] {6};
+	\addplot[domain=0:20, dashed] {7};
+	
+	%requests
+	\request{1}{2}{1}
+	\request{1}{2}{2}
+	\request{1}{2}{3}
+	\request{2}{3}{4}
+	\request{2}{3}{5}
+	\request{2}{3}{6}
+	\request{3}{4}{7}
+	\request{3}{4}{8}
+	\request{1}{5}{9}
+	\request{1}{5}{10}	
+	\request{1}{6}{11}
+	\request{1}{6}{12}
+	\request{1}{7}{13}
+	\request{1}{7}{14}
+	\request{1}{3}{15}
+	
+	\end{axis}
+	
+	
+	\end{tikzpicture}
+	\caption{problem in the older version}\label{exOldCrep}
+	
+\end{figure}
+	
+	
+	
+	\section{Algorithm Overview}
+	In this section we give a high-level overview of the algorithm. Implementation details will be discussed in greater detail in \cref{implDetSection}.
+	
+	\subsection{Overview}
+	The general idea of the algorithm is to maintain a second-order partitioning of the nodes into \textit{communication components} which are sets of nodes that communicated frequently. As more requests from the input sequence $\sigma$ are revealed to the algorithm the components grow in size until the algorithm discovers a component that is too big and hence decides to delete it.\nl
+	
+	More formally, initially each node is assigned to a singleton component, but as the algorithm is given the input sequence $\sigma$ new communication patterns unfold which the algorithm keeps track of by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of paid communication requests between the end points of each edge, i.e. for edge $e=\{u,v\}$ $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is paid if the nodes are located o different servers at the time of the request.\nl
+	Our approach defines sets of nodes that communicate frequently as those that represent subgraphs with high connectivity, in this case those with connectivity at least $\alpha$.
+	
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the subset has cardinality greater than $k$ the algorithm instead splits the components whose nodes are contained in $S$ into singleton components and deletes all edges that were contained in $S$, i.e. every edge where both end points are elements of $S$.
+	%The algorithm maintains a graph of the following form: each node of the graph represents a component consisting of some subset of actual communication nodes. Edges are inserted as new requests are handled but might also be deleted as components are merged.
+	%On a new request the algorithm checks whether both endpoints of the request are currently mapped to the same cluster.
+	%If this is the case then the algorithm does nothing.
+	%Otherwise it increases the corresponding edge weight by one and checks whether there is a new mergeable component set, i.e. a subset S of components with connectivity at least $\alpha$.
+	%If this is the case the algorithm performs a set of (pairwise) merge actions in which it collocates two components by either moving one to the cluster of the other if there is enough capacity for such a move or it moves both components to another cluster that has enough capacity for both components combined. If the resulting component is of size greater than $k$ the algorithm deletes the component by splitting it into singleton components without actually collocating them.\nl
+	
+	The collocation of such component sets of at most $k$ individual communication nodes is always possible due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$. We have also included a pseudocode description of the algorithm in \cref{highLevelAg}.\nl\nl
+	
+	\begin{algorithm}
+		\caption{DynamicDecomp}
+		\label{highLevelAg}
+		\begin{algorithmic}
+			\STATE Initialize an empty graph on n nodes
+			\STATE turn each of the n nodes into a singleton component
+			\FORALL{$r=\{u,v\}\in\sigma$}
+			
+			\IF{$S(v)\neq S(u)$}
+			\STATE $w(\{u,v\})\gets w(\{u,v\})+1$
+			\ENDIF
+			\IF{$\exists$ component set $X$ with connectivity at least $\alpha$ and $|X|>1$ and $nodes(X)\leq k$}
+			\STATE merge(X)
+			\ENDIF
+			\IF{$\exists$ component set $Y$ with connectivity at least $\alpha$ and $|Y|>1$ and $nodes(Y)> k$}
+			\STATE delete(Y)
+			\ENDIF	
+			
+			\ENDFOR
+					
+		\end{algorithmic}
+	\end{algorithm}
+	
+	
+%TODO define set of components that is merged at time t
+
+\section{New Analysis}
+
+\subsection{Algorithm Definitions}
+
+\begin{defi}
+	Define for any subset S of components $w(S)$ as the total weight of all edges between nodes of S.
+\end{defi}
+Note that such an edge can only have positive weight if its endpoints are in different components.
+
+\begin{defi}
+	Let a set of components of size at least 2 and of connectivity $\alpha$ be a \textit{mergeable} component set.	
+\end{defi}
+
+
+\subsection{Structural Properties}
+
+
+\textbf{Note:} These properties are changed to use the connectivity based approach which generally simplifies them, but guarantees slightly less minimum edge weight within mergeable component sets.
+\begin{defi}
+	An $\alpha$\textit{-connected component} is a maximal set of vertices that is $\alpha$-connected.
+\end{defi}
+
+\begin{lemma}
+	At any time $t$ after \crep{} performed its merge and delete actions all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges.
+\end{lemma}
+
+\textit{Proof.} We proof the lemma by an induction on steps. The lemma holds trivially at time 0.\nl
+Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a true subset S of components with connectivity at least $\alpha$. We may assume that t is the earliest time for which S has connectivity $\alpha$.\nl 
+Then the incrementation of the weight of edge e at time t raised the connectivity of S, but S was not merged into the $\alpha$-connected component C that was created at time t and must hence also contain the endpoints of e. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S. 
+%TODO REPHRASE to differentiate set of components that was merged and the resulting component.
+
+\begin{lemma}
+	Fix any time t and consider weights right after they were updated by \crep{} but before any merge or delete actions. Then all true subsets S of components have connectivity at most $\alpha$ and a mergeable component set S has connectivity exactly $\alpha$.
+\end{lemma}
+
+\textit{Proof.} This lemma follows directly from lemma 2 as connectivities can only increase by at most 1 at each time t.
+
+\begin{lemma}
+	\label{cut_lemma}
+	The weight between the components of a component subset S of connectivity $\alpha$ is at least $|S|/2 \cdot alpha$.
+\end{lemma}
+\textit{Proof.} Consider the sum of the weighted degrees of all components:
+\begin{align*}
+\sum_{c\in S}deg_S(c)=2\sum_{e\in S}w(e)
+\end{align*}
+The equality follows as the left sum counts each edge twice, once for each endpoint.
+Now consider the fact that each component must have degree at least $\alpha$ with respect to the edges in S as S has connectivity $\alpha$ and hence the lemma follows.
+%TODO rephrase like the lemma in the original analysis, with F(c)
+
+\begin{lemma}
+	%TODO rephrase this such that it is clear that this only holds during the normal algorithm flow, i.e. if merges are performed as soon as possible as otherwise we might encounter subsets of cardinality greater than 1 with connectivity greater than alpha
+	\label{cut_lemma_upper}
+	The weight between the components of a component subset $S$ of connectivity $\alpha$ is at most $(|S|-1)\cdot\alpha$.
+\end{lemma}
+\textit{Proof.} We iteratively partition $S$ into subsets via MinCuts with regard to edge weight, i.e. we consider a MinCut of $S$ which partitions $S$ into the subsets $S_1$ and $S_2$ and iteratively partition the resulting sets until all sets contain only one component each. As this required at most $|S|-1$ cuts of value at most $\alpha$.
+
+\subsection{Upper Bound On \crep{}}
+
+We define the following notions for a component $C\in\del{}(\sigma)$, i.e. the subgraph induced by the nodes of $C$ has connectivity at least $\alpha$ and $C$ consists of more than $k$ nodes:
+
+Let $epoch(C)$ denote the (node, time) pairs of nodes in $C$ starting at the time after the time $\tau(node)$ when $n$ was last turned into a singleton component, i.e. $epoch(C)=\bigcup_{n\in nodes(C)}\{n\}\times\{\tau(n)+1,...,\text{del-time}(C)\}$. This allows us to uniquely assign each node to a deleted component $C$ at each point in time $t$ (except for nodes in components that persist until the end of sequence $\sigma$).
+
+We assign all requests to $epoch(C)$ whose corresponding requests are deleted because of the deletion of component $C$ and call the set of those requests $req(C)$.
+We split the requests from $req(C)$ into two sets: $core(C)$ contains all requests for which both nodes have already been assigned to $C$ at the time of the request, i.e. $core(C)=\{r=\{u,v\}\in\sigma| (u,time(r))\in epoch(C)\text{ and } (v, time(r))\in epoch(C)\}$. These are the requests that led to the creation of component $C$. 
+$halo(C)$ contains all requests from $req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $halo(C)=req(C)\backslash core(C)$.
+
+\subsection{Lower Bound on \opt{}}
+
+
+%TODO update as necessary
+\textbf{Note:} The following analysis is mostly the same as in \cite{Avin2015}.	
+
+	\section{Lower Bound on OPT}
+	\begin{defi}
+		Define the time of creation of a component $c$ managed by \crep{} as $\tau(c)$. For a non-singleton component c it is the time at which other components were merged resulting in c, if c is a singleton component $\tau(c)$ is 0 if c existed at time 0 and the last time a component containing c was deleted otherwise.
+	\end{defi}
+	\begin{defi}
+		%TODO possibly add explanation of this definition
+		For a non-singleton component $c$, define
+	\end{defi}
+	\begin{align*}
+	F(c)=\biguplus_{b\in S(c)}\times \{\tau(b)+1,...,\tau(c)\}.
+	\end{align*}
+	
+	\begin{defi}
+		A communication request between nodes x and y at time $t$ is \textit{contained} in $F(C)$ if $(x,y)\in F(c)$ and $(y,t)\in F(c)$.
+	\end{defi}
+
+	\begin{defi}
+		A migration of node x performed by OPT at time t is \textit{contained} in $F(C)$ if $(x,t)\in F(c)$
+	\end{defi}
+
+	\begin{defi}
+		For any component c, define $\opt{}(c)$ as the cost incurred by \opt{} due to requests contained in $F(c)$ plus the cost due to migrations contained in $F(c)$.
+	\end{defi}
+
+	\begin{defi}
+		Define $Y_c$ as the set of clusters containing nodes of $c$ in the solution of \opt after \opt performs its migartions (if any) at time $\tau(c)$.
+	\end{defi}
+	Then the total cost of \opt can be lower-bounded: $\opt\leq\sum_c \opt(c)$.\nl\nl	
+	
+	%TODO remove this later
+	\textbf{Note:} The following lemma is a changed from lemma 5 in \cite{Avin2015} in order to account for the fact that the connectivity-based approach only guarantees at least weight $|B|\cdot\alpha/2$ between different bundles whereas the \crep{}-density approach from \cite{Avin2015} guarantees a higher edge weight of $(|B|-1)\cdot\alpha$.
+
+	\begin{lemma}
+		\label{lem11}
+		For any non-trivial component $c$, it holds that $\opt(c)\geq1/2\cdot|Y_c|\cdot\alpha-\sum_{b\in S(c)}(|Y_b|-1)\cdot\alpha)$.
+	\end{lemma}
+	%TODO make sure that lemma statement is enough for the analysis
+
+	\textit{Proof.} Fix a component $b\in S(c)$ and any node $x\in b$. Let \optmig(x) be the number of \opt migrations of node x at times $t\in\{\tau(b)+1,...,\tau(c)\}$. Furthermore, let $Y'_x$ be the set of clusters that contained x at some moment in time $t\in\{\tau(b)+1,...,\tau(c)\}$ (in the solution of \opt). We extend these notions to components: $\optmig{}(b):=\sum_{x\in b}\optmig(x)$ and $Y_{b'}:=\bigcup_{x\in b}Y'_x$. Observe that $|Y_b'|\leq|Y_b|+\optmig(b)$.\nl
+	Now aggregate components of $S(c)$ into component-sets called \textit{bundles}, so that any two bundles always have their nodes in disjoint clusters. To achieve this, we construct a hypergraph, whose nodes correspond to clusters from $\cup_{b\in S(s)}Y'_b$. Each component $b\in S(c)$ defines a hyperedge that connects all nodes (clusters) that are in $Y'_b$. Now we examine the connected components of this hypergraph which we call  \textit{hypergraph parts} from now on.
+	We bound the number of hypergraph parts by using the fact that the hyperedge related to component $b$ connects $|Y'_b|$ nodes:
+	\begin{align*}
+		B&\geq|\bigcup_{b\in S(s)}Y'_b|-\sum_{b\in S(c)}(|Y'_b|-1)\\
+		&\geq|Y_c|-\sum_{b\in S(c)}(|Y_b|-1)-\sum_{b\in S(c)}\optmig(b).
+	\end{align*}
+	Due to \cref{cut_lemma} the number of communication requests in $F(c)$ that are between different bundles is at least $|B|\cdot\alpha/2$. Each of these requests is by definition paid by \opt as each request involves a communication between nodes which \opt stored in different clusters.
+	\opt(c) also involves $\sum_{b\in S(c)}\optmig(b)$ node migrations in $F(c)$.\nl
+	Therefore $2\opt{}(c)\geq|B|\cdot\alpha+\sum_{b\in S(c)}\optmig(b)\cdot\alpha\geq|Y_c|\cdot\alpha-\sum_{b\in S(c)}(|Y_b|-1)\cdot\alpha$ and hence also
+	$\opt(c)\geq1/2\cdot(|Y_c|\cdot\alpha-\sum_{b\in S(c)}(|Y_b|-1)\cdot\alpha)$.\nl
+
+\textbf{Note:} This lemma does not work like lemma 6 in \cite{Avin2015} as there is no obvious telescope sum.
+	\begin{lemma}
+		For any input $\sigma$, let $\del(\sigma)$ be the set of components that were eventually deleted by \crep{}. Then $\opt(\sigma)\geq\sum_{c\in\del(\sigma)}|c|/(2k)\cdot\alpha$.
+	\end{lemma}
+	%TODO check whether lemma needs to be rephrased, e.g. if previous lemma cant be used to achieve this statement
+	\textit{Proof.} Fix any component $c\in\del(\sigma)$. Consider a tree $T(c)$ which describes how component $c$ was created: the leaves of $T(c)$ are singleton components containing nodes of c, the root is c itself, and each internal node corresponds to a component created at a single time by merging its children.
+	We now sum \opt(b) over all components $b$ from T(c), including the root $c$ and the leaves L(T(c)).
+	The lower bound given by \cref{lem11} does not sum telescopically:
+	%TODO rephrase previous lemma to make this work, possibly non-integer values by dividing by 2
+	%\begin{align*}
+	%	\sum_{b\in T(c)}\opt{}(b)&\geq
+	%\end{align*}
+
+
+	\section{Upper Bound on \crep{}}
+	Fix any input $\sigma$ of \crep{} and define the following notions.
+	\begin{defi}
+		Let $M(\sigma)$ be the sequence of merge actions (real and artificial ones) performed by \crep{}. For any real merge action $m\in M(\sigma)$, let \size(m) denote the size of the smaller component that was merged. For an artificial merge action set \size(m)=0.
+	\end{defi}
+
+\begin{defi}
+	Let \final($\sigma$) be the set of all components that exist when \crep{} finishes sequence $\sigma$. Note that $w(\final(\sigma))$ is the total weight of all edges after processing $\sigma$.
+\end{defi}
+
+We split \crep{}($\sigma$) into two parts: the cost of serving requests, \crep{}$^{req}(\sigma)$, and the cost of node migrations, \crep{}$^{mig}(\sigma)$.\nl
+
+
+\textbf{Note:} This lemma was adapted from lemma 7 in \cite{Avin2015} and changed to only give an upper bound instead of an equality as alpha-connectivity only gives upper and lower bounds and that is all that is needed for the analysis.
+\begin{lemma}
+	For any input $\sigma$, \crep{}$^{req}(\sigma)\leq|M(\sigma)|\cdot\alpha+w(\final(\sigma))$.
+\end{lemma}
+\textit{Proof.} The lemma follows by an induction on all requests of $\sigma$. Whenever \crep{} pays for the communication request, the corresponding edge weight is incremented and both sides increase by 1.
+At a time when $s$ components are merged, $s-1$ merge actions are executed, and due to \cref{cut_lemma_upper} the total edge weight decreases by at most $(s-1)\cdot\alpha$.
+
+
+\textbf{Note:} This lemma and its proof do not use connectivity or \crep{}-density at all as they only rely on the general migration behaviour and hence is exactly the same as lemma 8 in \cite{Avin2015}.
+\begin{lemma}
+	For any input $\sigma$, with $(2+\epsilon)$-augmentation, \crep{}$^{mig}(\sigma)\leq(1+4/\epsilon)\cdot\alpha\cdot\sum_{m\in M(\sigma)}\size(m)$.
+\end{lemma}
+
+\textit{Proof.} If \crep{} has more than $2k$ nodes in cluster $V_i$ (for $i\in\{1,...,l\}$), then we call this excess \textit{overflow} of $V_i$, otherwise, the overflow of $V_i$ is zero. We denote the overflow of cluster $V_i$ measured right after processing sequence $\sigma$ by OVR$^\sigma(V_i)$. It suffices to show the following relation for any sequence $\sigma$:
+
+\begin{align}
+\text{\crep{}}^{mig}(\sigma)+\displaystyle\sum_{j=1}^l(4/\epsilon)\cdot\alpha\cdot\ovr^\sigma(V_j)\leq(1+4/\epsilon)\cdot\alpha\cdot\sum_{m\in M(\sigma)}\size(m).\label{eq1}
+\end{align}
+As the second summand of \ref{eq1} is always non-negative, \ref{eq1} will imply the lemma.
+The proof will follow by an induction on all requests in $\sigma$. Clearly, \ref{eq1} holds trivially at the beginning, as there are no overflows, and thus both sides of \ref{eq1} are zero.
+Assume that \ref{eq1} holds fo a sequence $\sigma$ and we show it for sequence $\sigma\cup\{r\}$, where $r$ is some request.
+We may focus on a request $r$ that triggers component(s) migration as otherwise \ref{eq1} holds trivially.
+
+Such a migration is triggered by a real merge action $m$ of two components $c_x$ and $c_y$. We assume that $|c_x|\leq|c_y|$, and hence $\size(m)=|c_x|$. Note that $|c_x|+|c_y|\leq k$, as otherwise the resulting component would be deleted and no migration would be performed.
+
+Let $V_x$ and $V_y$ denote the cluster that held components $c_x$ and $c_y$, respectively, and $V_z$ be the destination cluster for $c_x$ and $c_y$ ($z=y$ is possible). For any cluster $V$, we denote the change in its overflow by $\Delta\ovr(V)=\ovr^{\sigma\cup\{r\}}(V)-\ovr{}^{\sigma}(V)$. It suffices to show that the change of the left hand side of \ref{eq1} is at most the increase of its right hand side, i.e.:
+\begin{align}
+\text{\crep{}}^{mig}(r)+\displaystyle\sum_{V\in\{V_x, V_y, V_z\}}(4/\epsilon)\cdot\alpha\cdot\Delta\ovr{}(V)\leq(1+4/\epsilon)\cdot|c_x|\cdot\alpha.\label{eq2}
+\end{align}
+
+In order to show that \ref{eq2} holds, consider three cases:
+
+\begin{tabularx}{\textwidth}{cC}
+	1. &$V_y$ had at least $|c_x|$ empty slots. In this case, \crep{} simply migrates $c_x$ to $V_y$ and pays $|c_x|\cdot\alpha$. Then, $\Delta\ovr{}(V_x)\leq0. \Delta\ovr{}(V_y)\leq|c_x|, V_z=V_y$, and thus \ref{eq2} follows.\\
+	
+	2. &$V_y$ had less than $|c_x|$ empty slots and $|c_y|\leq(2/\epsilon)\cdot|c_x|$. \crep{} migrates both $c_x$ and $c_y$ to component $V_z$ and the incurred cost is \crep{}$^{mig}(r)=(|c_x|+|c_y|)\cdot\alpha\leq(1+2/\epsilon)\cdot|c_x|\cdot\alpha<(1+4/\epsilon)\cdot|c_x|\cdot\alpha$. It remains to show that the second summand of \ref{eq2} is at most 0. Clearly, $\Delta\ovr{}(V_x)\leq0$ and $\Delta\ovr{}(V_y)\leq0$. Furthermore, the number of nodes in $V_z$ was at most $k$ before the migration by the definition of \crep{}, and thus is at most $k+|c_x|+|c_y|\leq 2k$ after the migration. This implies that $\Delta\ovr{}(V_z)=0-0=0$.\\
+	3. &$V_y$ had less than $|c_x|$ empty slots and $|c_y|>(2/\epsilon)\cdot|c_x|$. As in the previous case, \crep{} migrates $c_x$ and $c_y$ to component $V_z$, paying \crep{}$^{mig}(r)=(|c_x|+|c_y|)\cdot\alpha<2\cdot|c_y|\cdot\alpha$. This time, \crep{}$^{mig}(r)$ can be much larger than the right hand side of \ref{eq2}, and thus we will resort to showing that the second summand of \ref{eq2} is at most $-2\cdot|c_y|\cdot\alpha$.\\
+	
+	&As in the previous case, $\Delta\ovr{}(V_x)\leq0$ and $\Delta\ovr{}(V_z)=0$. Observe that $|c_x|<(\epsilon/2)\cdot|c_y|\leq(\epsilon/2)\cdot k$. As the migration of $|c_x|$ to $V_y$ was not possible, the initial number of nodes in $V_y$ was greater than $(2+\epsilon)\cdot k-|c_x|\geq(2+\epsilon/2)\cdot k$, i.e., $\ovr{}^\sigma(V_y)\geq(\epsilon/2)\cdot |c_y|$. As component $c_y$ was migrated out of $V_y$, the number of overflow nodes in $V_y$ changes by
+	\begin{align*}
+	\Delta\ovr{}(V_y)=-\text{min}\{\ovr{}^\sigma(V_y), |c_y|\}\leq-(\epsilon/2)\cdot|c_y|.
+	\end{align*}
+	Therefore, the second summand of \ref{eq2} is at most $(4/\epsilon)\cdot\alpha\cdot\Delta\ovr{}(V_y)\leq-(4/\epsilon)\cdot\alpha\cdot(\epsilon/2)\cdot|c_y|=-2\cdot|c_y|\cdot\alpha|$ as desired. \\
+	\end{tabularx}\qed
+
+
+	
+\section{Competitive Ratio}
+
+\textbf{Note:} The following lemma is the same as lemma 9 in \cite{Avin2015}.
+\begin{lemma}
+	\label{size_lemma}
+	For any input $\sigma$, it holds that $\sum_{m\in M(\sigma)}\size{}(m)\leq\sum_{c\in\del(\sigma)}|c|\cdot \log k+\sum_{c\in\final(\sigma)}|c|\cdot\log|c|$, where all logarithms are binary.
+\end{lemma}
+\textit{Proof.} We prove the lemma by an induction on all requests of $\sigma$. At the very beginning, both sides of the lemma inequality are zero, and hence the induction basis holds trivially. We assume that the lemma inequality is preserved for a sequence $\sigma$ and we show it for sequence $\sigma\cup\{r\}$, where $r$ is an arbitrary request. We may assume $r$ triggered some merge actions as otherwise the claim follows trivially.\nl
+First, assume $r$ triggered a sequence of real merge actions. We show that the lemma inequality is preserved after processing each merge action. Let $c_x$ and $c_y$ be merged components with sizes $p=|c_x|$ and $q=|c_y|$, where $p\leq q$ without loss of generality. Due to such action, the right hand side of the lemma inequality increases by
+\begin{align*}	
+&\text{\quad}(p+q)\cdot\log(p+q)-p\cdot\log p-q\cdot\log q\\
+&=p\cdot(\log(p+q)-\log p)+q\cdot(\log(p+q)-\log q)\\
+&\geq p\cdot\log(p+q)/p\\
+&\geq p\cdot\log 2=p.
+\end{align*}
+
+As the left hand side of the equality changes exactly by $p$, the inductive hypothesis holds.\nl
+Now assume that $r$ triggered a sequence of artificial merge actions (i.e., followed by a delete action) and let $c_1,c_2,...,c_g$ denote components that were merged to create component $c$ that was immediately deleted. Then, the right hand side of the lemma inequality changes by $\sum_{i=1}^g|c_i|\cdot\log|c_i|+|c|\cdot\log k\geq-\sum_{i=1}^g|c_i|\cdot\log k+|c|\cdot\log k=0$. As the left hand side of the lemma inequality is unaffected by artificial merge actions, the inductive hypothesis follows also in this case.\qed
+
+\section{Implementation Details}
+\label{implDetSection}
+
+\subsection{Algorithm Pseudocode}
+
+\begin{algorithm}
+	\caption{insertAndUpdate(a,b)}
+	\label{insertAndUpdate}
+	\begin{algorithmic}
+		\IF {cluster[a] == cluster[b]}
+		\STATE return
+		\ENDIF
+		\STATE addEdge($a,b$)
+		\STATE updateDecomposition$(a,b)$
+		\STATE del$\leftarrow$ updateMapping$(alphaConnectedComponents)$
+		\STATE delComponents$(del)$
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{updateDecomposition(a,b)}
+	\label{updateDecomposition}
+	\begin{algorithmic}
+		\STATE q$\leftarrow$ findSmallestSubgraph$(a,b)$
+		\WHILE{q not empty}
+		\STATE current$\leftarrow$ q.popFront()
+		\IF{res.connectivity==alpha}
+		\STATE continue
+		\ENDIF
+		\STATE res$\leftarrow$ decompose(current, current.connectivity+1)//decomposition based on s-t-cuts
+		\STATE current.connectivity $\leftarrow$ value of smallest encountered cut
+		\IF {current.connectivity$\geq$alpha}
+		\STATE continue
+		\ENDIF
+		\STATE childrenQueue $\leftarrow$ res
+		\STATE //make sure that only subgraphs with higher connectivity are added as children
+		\WHILE{childrenQueue not empty}
+		\STATE c$\leftarrow$childrenQueue.pop()
+		\STATE cRes$\leftarrow$decompose(c, current.connectivity+1)
+		\STATE c.connectivity $\leftarrow$ value of smallest encountered cut
+		\IF{decompose returned only one graph}
+		\STATE current.children.add(cRes)
+		\IF{cRes has connectivity smaller than alpha}
+		\STATE q.push(cRes)
+		\ENDIF
+		\ELSE
+		\STATE childrenQueue.add(cRes)
+		\ENDIF
+		\ENDWHILE
+		\ENDWHILE
+	\end{algorithmic}		
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{delComponents(del)}
+	\label{delComponents}
+	\begin{algorithmic}
+		\STATE delInterEdges(del)
+		\STATE root.connectivity=0
+		\STATE root.children=\{\}
+		\STATE updateDecomposition(0,1)
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{Algorithm Explanations}
+\begin{itemize}
+	\item \cref{insertAndUpdate} calls the other routines as needed
+	\item \cref{updateDecomposition} starts at the smallest subgraph containing the nodes a and b in the decomposition tree and computes a new decomposition of the subgraph. Specifically it uses the decomposition approach from \cite{Chang2013} to decompose one subgraph and then also computes the subgraphs with the next higher connectivity and recurses until the connectivity has reached alpha.
+	\item updateMapping checks whether the alphaConnectedComponents were changed. If yes then it either collocates them if the resulting component is small enough or it adds the component to its return value. Then all the returned components are deleted, i.e. the edges connecting its nodes are deleted and the decomposition is recomputed
+	\item this deletion is performed by \cref{delComponents}
+\end{itemize}
+
+\section{Evaluation}
+% figures for the evaluation
+
+
+
+
+
+
+%TODO give sources for parmetis and metis performance and results
+%TODO include names of specific algorithms used
+%TODO add reference to algorithm description overview
+For this evaluation we compare our implementation described in \cref{implDetSection} to a static algorithm available via Metis (METIS\_PartGraphRecursive) and an adaptive/dynamic algorithm (ParMETIS\_V3\_AdaptiveRepart) implemented in the ParMetis framework. Both frameworks are known to produce very good results and to be very fast.\nl
+As input data we use several HPC traces, the nature of the data is described in more detail by Avin, Ghobadi, Griner and Schmid in \cite{Avin2019}.
+
+All data sets contain 1024 different communication nodes and are limited to the first 300 000 requests. The value of $\alpha$ is set to be 6 and the algorithm was tasked to partition the nodes into 32 clusters of size 32 each. The dynamic algorithms were allowed to use augmentation with a factor of $2.1$, i.e. for the dynamic algorithms the maximum cluster capacities were $\lfloor32\cdot2.1\rfloor=67$.\nl
+%TODO investigate capacity usage of static algorithm
+To our knowledge it is not possible to specify hard limits for the capacities used by the static algorithm implemented in Metis and as a result there are some occurences where the algorithm exceeds the capacities that are allowed by a small amount.\nl\nl
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C,D},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=decomposition]{\totalcostplot};
+	\addplot table[x=database,y=ParMetis]{\totalcostplot};
+	\addplot table[x=database, y=Static]{\totalcostplot};
+	\legend{Decomposition, ParMetis, Static}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of total cost}\label{totalCostPlot}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C,D},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=750000,
+	ylabel={time in ms},
+	]
+	\addplot table[x=database,y=decomposition]{\runtimeplot};
+	\addplot table[x=database,y=ParMetis]{\runtimeplot};
+	\addplot table[x=database, y=Static]{\runtimeplot};
+	\legend{Decomposition, ParMetis, Static}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of run time}\label{runTimePlot}
+\end{figure}
+
+We will first discuss the overall results of our experiments, i.e. we will describe the quality of the results (see \cref{totalCostPlot}) as well as the running time needed for each examined algorithm (see \cref{runTimePlot}).\nl
+The static algorithm is shown to give the best results in the shortest time, but the low running was also to be expected as it is only called once as opposed to the 300 000 times the other algorithms need to decide whether they want to change their partitioning. The static algorithm also has knowledge of all requests and as a result is able to produce the best results. \nl
+For data set A our decomposition algorithm beats the adaptive ParMetis algorithm by a significant amount of about one third of the cost of the latter while ParMetis is significantly faster. For data sets B and C ParMetis is shown to produce slightly better results within drastically less computation time. It is worth mentioning that ParMetis uses the ... graph description format that does not allow for easy adaptation on the fly and needed to be recomputed after every request during our tests. However, we chose not to include this in the running time calculations.\nl
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C,D},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=200000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=decomposition]{\commcostplot};
+	\addplot table[x=database,y=ParMetis]{\commcostplot};
+	\addplot table[x=database, y=Static]{\commcostplot};
+	\legend{Decomposition, ParMetis, Static}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of communication cost}\label{commCostPlot}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C,D},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=decomposition]{\migcostplot};
+	\addplot table[x=database,y=ParMetis]{\migcostplot};
+	\addplot table[x=database, y=Static]{\migcostplot};
+	\legend{Decomposition, ParMetis, Static}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of migration cost}\label{migCostPlot}
+\end{figure}
+
+
+In the next section we discuss the general distribution of the total costs of each algorithm to communication (see \cref{commCostPlot}) and migration costs (\cref{migCostPlot}).\nl
+Both ParMetis as well as our decomposition algorithm produce significantly more migration cost than communication cost while the static algorithm predominantly pays for communication. This shows that the dynamic algorithms tend to migrate too much while the static implementation is restricted to only migrate once to a static configuration it finds suitable and as a result has to pay more for communication. This also shows that there is potential to refine the dynamic implementations in such a way that they produce more balanced, and hopefully also less, cost overall.
+
+\clearpage %move references to the back
+\bibliography{C:/Users/Tobias/Dropbox/ThesisPapers/ThesisBibTex}
+\bibliographystyle{plain}                                
+\addcontentsline{toc}{chapter}{References}  
+	
+\end{document}
