@@ -263,59 +263,77 @@
 	
 %TODO define set of components that is merged at time t
 
+\section{New Analysis}
+
+\subsection{Algorithm Definitions}
+
+\begin{defi}
+	Define for any subset S of components $w(S)$ as the total weight of all edges between nodes of S.
+\end{defi}
+Note that such an edge can only have positive weight if its endpoints are in different components.
+
+\begin{defi}
+	Let a set of components of size at least 2 and of connectivity $\alpha$ be a \textit{mergeable} component set.	
+\end{defi}
+
+
+\subsection{Structural Properties}
+
+
+\textbf{Note:} These properties are changed to use the connectivity based approach which generally simplifies them, but guarantees slightly less minimum edge weight within mergeable component sets.
+\begin{defi}
+	An $\alpha$\textit{-connected component} is a maximal set of vertices that is $\alpha$-connected.
+\end{defi}
+
+\begin{lemma}
+	At any time $t$ after \crep{} performed its merge and delete actions all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges.
+\end{lemma}
+
+\textit{Proof.} We proof the lemma by an induction on steps. The lemma holds trivially at time 0.\nl
+Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a true subset S of components with connectivity at least $\alpha$. We may assume that t is the earliest time for which S has connectivity $\alpha$.\nl 
+Then the incrementation of the weight of edge e at time t raised the connectivity of S, but S was not merged into the $\alpha$-connected component C that was created at time t and must hence also contain the endpoints of e. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S. 
+%TODO REPHRASE to differentiate set of components that was merged and the resulting component.
+
+\begin{lemma}
+	Fix any time t and consider weights right after they were updated by \crep{} but before any merge or delete actions. Then all true subsets S of components have connectivity at most $\alpha$ and a mergeable component set S has connectivity exactly $\alpha$.
+\end{lemma}
+
+\textit{Proof.} This lemma follows directly from lemma 2 as connectivities can only increase by at most 1 at each time t.
+
+\begin{lemma}
+	\label{cut_lemma}
+	The weight between the components of a component subset S of connectivity $\alpha$ is at least $|S|/2 \cdot alpha$.
+\end{lemma}
+\textit{Proof.} Consider the sum of the weighted degrees of all components:
+\begin{align*}
+\sum_{c\in S}deg_S(c)=2\sum_{e\in S}w(e)
+\end{align*}
+The equality follows as the left sum counts each edge twice, once for each endpoint.
+Now consider the fact that each component must have degree at least $\alpha$ with respect to the edges in S as S has connectivity $\alpha$ and hence the lemma follows.
+%TODO rephrase like the lemma in the original analysis, with F(c)
+
+\begin{lemma}
+	%TODO rephrase this such that it is clear that this only holds during the normal algorithm flow, i.e. if merges are performed as soon as possible as otherwise we might encounter subsets of cardinality greater than 1 with connectivity greater than alpha
+	\label{cut_lemma_upper}
+	The weight between the components of a component subset $S$ of connectivity $\alpha$ is at most $(|S|-1)\cdot\alpha$.
+\end{lemma}
+\textit{Proof.} We iteratively partition $S$ into subsets via MinCuts with regard to edge weight, i.e. we consider a MinCut of $S$ which partitions $S$ into the subsets $S_1$ and $S_2$ and iteratively partition the resulting sets until all sets contain only one component each. As this required at most $|S|-1$ cuts of value at most $\alpha$.
+
+\subsection{Upper Bound On \crep{}}
+
+We define the following notions for a component $C\in\del{}(\sigma)$, i.e. the subgraph induced by the nodes of $C$ has connectivity at least $\alpha$ and $C$ consists of more than $k$ nodes:
+
+Let $epoch(C)$ denote the (node, time) pairs of nodes in $C$ starting at the time after the time $\tau(node)$ when $n$ was last turned into a singleton component, i.e. $epoch(C)=\bigcup_{n\in nodes(C)}\{n\}\times\{\tau(n)+1,...,\text{del-time}(C)\}$. This allows us to uniquely assign each node to a deleted component $C$ at each point in time $t$ (except for nodes in components that persist until the end of sequence $\sigma$).
+
+We assign all requests to $epoch(C)$ whose corresponding requests are deleted because of the deletion of component $C$ and call the set of those requests $req(C)$.
+We split the requests from $req(C)$ into two sets: $core(C)$ contains all requests for which both nodes have already been assigned to $C$ at the time of the request, i.e. $core(C)=\{r=\{u,v\}\in\sigma| (u,time(r))\in epoch(C)\text{ and } (v, time(r))\in epoch(C)\}$. These are the requests that led to the creation of component $C$. 
+$halo(C)$ contains all requests from $req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $halo(C)=req(C)\backslash core(C)$.
+
+\subsection{Lower Bound on \opt{}}
+
 
 %TODO update as necessary
-\textbf{Note:} The following analysis is mostly the same as in \cite{Avin2015}.
-
-	\section{Algorithm Definitions}
-	\begin{defi}
-		Define for any subset S of components $w(S)$ as the total weight of all edges between nodes of S.
-	\end{defi}
-	Note that such an edge can only have positive weight if its endpoints are in different components.
-	
-	\begin{defi}
-		Let a set of components of size at least 2 and of connectivity $\alpha$ be a \textit{mergeable} component set.
-	\end{defi}
-	
-	\section{Structural Properties}
-	\textbf{Note:} These properties are changed to use the connectivity based approach which generally simplifies them, but guarantees slightly less minimum edge weight within mergeable component sets.
-	\begin{defi}
-		An $\alpha$\textit{-connected component} is a maximal set of vertices that is $\alpha$-connected.
-	\end{defi}
-
-	\begin{lemma}
-		At any time $t$ after \crep{} performed its merge and delete actions all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges.
-	\end{lemma}
-
-	\textit{Proof.} We proof the lemma by an induction on steps. The lemma holds trivially at time 0.\nl
-	Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a true subset S of components with connectivity at least $\alpha$. We may assume that t is the earliest time for which S has connectivity $\alpha$.\nl 
-	Then the incrementation of the weight of edge e at time t raised the connectivity of S, but S was not merged into the $\alpha$-connected component C that was created at time t and must hence also contain the endpoints of e. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S. 
-	%TODO REPHRASE to differentiate set of components that was merged and the resulting component.
-	
-	\begin{lemma}
-		Fix any time t and consider weights right after they were updated by \crep{} but before any merge or delete actions. Then all true subsets S of components have connectivity at most $\alpha$ and a mergeable component set S has connectivity exactly $\alpha$.
-	\end{lemma}
-
-	\textit{Proof.} This lemma follows directly from lemma 2 as connectivities can only increase by at most 1 at each time t.
-	
-	\begin{lemma}
-		\label{cut_lemma}
-		The weight between the components of a component subset S of connectivity $\alpha$ is at least $|S|/2 \cdot alpha$.
-	\end{lemma}
-	\textit{Proof.} Consider the sum of the weighted degrees of all components:
-	\begin{align*}
-		\sum_{c\in S}deg_S(c)=2\sum_{e\in S}w(e)
-	\end{align*}
-	The equality follows as the left sum counts each edge twice, once for each endpoint.
-	Now consider the fact that each component must have degree at least $\alpha$ with respect to the edges in S as S has connectivity $\alpha$ and hence the lemma follows.
-	%TODO rephrase like the lemma in the original analysis, with F(c)
-	
-	\begin{lemma}
-		%TODO rephrase this such that it is clear that this only holds during the normal algorithm flow, i.e. if merges are performed as soon as possible as otherwise we might encounter subsets of cardinality greater than 1 with connectivity greater than alpha
-		\label{cut_lemma_upper}
-		The weight between the components of a component subset $S$ of connectivity $\alpha$ is at most $(|S|-1)\cdot\alpha$.
-	\end{lemma}
-	\textit{Proof.} We iteratively partition $S$ into subsets via MinCuts with regard to edge weight, i.e. we consider a MinCut of $S$ which partitions $S$ into the subsets $S_1$ and $S_2$ and iteratively partition the resulting sets until all sets contain only one component each. As this required at most $|S|-1$ cuts of value at most $\alpha$
+\textbf{Note:} The following analysis is mostly the same as in \cite{Avin2015}.	
 
 	\section{Lower Bound on OPT}
 	\begin{defi}
@@ -666,8 +684,8 @@ For data set A our decomposition algorithm beats the adaptive ParMetis algorithm
 In the next section we discuss the general distribution of the total costs of each algorithm to communication (see \cref{commCostPlot}) and migration costs (\cref{migCostPlot}).\nl
 Both ParMetis as well as our decomposition algorithm produce significantly more migration cost than communication cost while the static algorithm predominantly pays for communication. This shows that the dynamic algorithms tend to migrate too much while the static implementation is restricted to only migrate once to a static configuration it finds suitable and as a result has to pay more for communication. This also shows that there is potential to refine the dynamic implementations in such a way that they produce more balanced, and hopefully also less, cost overall.
 
-
-\bibliography{../../ThesisPapers/ThesisBibTex}
+\clearpage %move references to the back
+\bibliography{C:/Users/Tobias/Dropbox/ThesisPapers/ThesisBibTex}
 \bibliographystyle{plain}                                
 \addcontentsline{toc}{chapter}{References}  
 	
