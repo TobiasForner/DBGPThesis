@@ -295,6 +295,7 @@ Then the incrementation of the weight of edge e at time t raised the connectivit
 %TODO REPHRASE to differentiate set of components that was merged and the resulting component.
 
 \begin{lemma}
+	\label{mergeable_lemma}
 	Fix any time t and consider weights right after they were updated by \crep{} but before any merge or delete actions. Then all true subsets S of components have connectivity at most $\alpha$ and a mergeable component set S has connectivity exactly $\alpha$.
 \end{lemma}
 
@@ -329,13 +330,47 @@ We assign all requests to $epoch(C)$ whose corresponding requests are deleted be
 We split the requests from $req(C)$ into two sets: $core(C)$ contains all requests for which both nodes have already been assigned to $C$ at the time of the request, i.e. $core(C)=\{r=\{u,v\}\in\sigma| (u,time(r))\in epoch(C)\text{ and } (v, time(r))\in epoch(C)\}$. These are the requests that led to the creation of component $C$. 
 $halo(C)$ contains all requests from $req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $halo(C)=req(C)\backslash core(C)$.
 
+We start the analysis by bounding the communication cost of \crep{} that is due to serving requests from $core(C)$ for $C\in\del{}(\sigma)$.
+
+\begin{lemma}
+	\label{core_comm_upper}
+	With augmentation $2+\epsilon$, \crep{} pays at most communication cost $|C|\cdot\alpha$ for requests in $core(C)$ where $C\in\del{}(\sigma)$.
+\end{lemma}
+
+\textit{Proof.} The lemma follows directly from \cref{cut_lemma_upper} due to the fact that component sets of connectivity $\alpha$ get merged immediately by \crep{} as shown in \cref{mergeable_lemma}.\nl
+
+Together with the fact that \crep{} pays for all requests in $halo(C)$ for deleted components $C$ this gives us  an upper bound on the costs of \crep{} together with the cost incurred to \crep{} due to requests and migrations of the components that do not get deleted during its execution, i.e. those components that are present after all requests from $\sigma$ have been processed.\qed\nl
+
+We continue our analysis by bounding the migration cost of \crep{} in the following lemma.
+%TODO specify base of the logarithm
+\begin{lemma}
+	With augmentation $2+\epsilon$, \crep{} pays at most migration costs of $\sum_{C\in\del{}(\sigma)}|C|\cdot\log k\cdot\alpha+\sum_{C\in FINAL-COMPS(\sigma)}|C|\cdot\log k\cdot\alpha$.
+\end{lemma}
+
+\textit{Proof.} First note that \crep{} only performs migrations when it merges components.
+We fix a component $C\in\del{}(\sigma)\cup FINAL-COMPS(\sigma)$ and bound the number of times each node of $C$ is moved as \crep{} processes the requests that led to the creation of $C$. As \crep{} reserves additional space $\lceil\epsilon\cdot|B|$ for each component $B$ and only moves component $B$ when a merge results in a component of size more than $(1+\epsilon)*|B|$ each node of $C$ was moved at most
+$\log k$ times. Summing over all nodes in $C$ bounds the number of migrations by $|C|\cdot\log k$ and leads to the desired bound on the migration costs as each node migration incurs cost $\alpha$ to \crep{}.\qed\nl
+
+Finally we summarize our results in the following lemma.
+%TODO clean up this lemma statement
+\begin{lemma}
+	\label{crep_upper_bound}
+	With augmentation $2+\epsilon$, \crep{} pays at most cost $2\cdot\sum_{C\in\del{}(\sigma)}|C|\cdot\log k\cdot\alpha+|halo(C)|+2\cdot\sum_{C\in FINAL-COMPS(\sigma)}|C|\cdot\log k\cdot\alpha+FINAL-WEIGHTS$.
+\end{lemma}
+%TODO make this proof more understandable by starting with a more genral statement and plugging in the previous lemmas
+\textit{Proof.} Note that the communication costs from \cref{core_comm_upper} are bounded by $\sum_{C\in\del{}(\sigma)}|C|\cdot k\cdot\alpha$. Similarly we can bound the migration costs due to components from $FINAL-COMPS$ by $\sum_{C\in FINAL-COMPS(\sigma)}|C|\cdot\log k\cdot\alpha$. Accounting for the requests in $halo(C)$ for a deleted component $C$ and weight of the edges that are present at the end of the execution of \crep{} leads to the lemma.\qed
+
+
 \subsection{Lower Bound on \opt{}}
+We split the analysis of the cost \opt{} has to pay into two parts. First we examine the cost incurred to \opt{} due to requests that led \crep{} to create (and delete) a component $C\in\del{}(\sigma)$. Then we provide a lower bound on the cost incurred to \opt{} due to requests from $halo(C)$ for $C\in\del{}(\sigma)$.
 
 
 %TODO update as necessary
+
+\section{Old Analysis}
 \textbf{Note:} The following analysis is mostly the same as in \cite{Avin2015}.	
 
-	\section{Lower Bound on OPT}
+	\subsection{Lower Bound on OPT}
 	\begin{defi}
 		Define the time of creation of a component $c$ managed by \crep{} as $\tau(c)$. For a non-singleton component c it is the time at which other components were merged resulting in c, if c is a singleton component $\tau(c)$ is 0 if c existed at time 0 and the last time a component containing c was deleted otherwise.
 	\end{defi}
@@ -399,7 +434,7 @@ $halo(C)$ contains all requests from $req(C)$ for which exactly one end point wa
 	%\end{align*}
 
 
-	\section{Upper Bound on \crep{}}
+	\subsection{Upper Bound on \crep{}}
 	Fix any input $\sigma$ of \crep{} and define the following notions.
 	\begin{defi}
 		Let $M(\sigma)$ be the sequence of merge actions (real and artificial ones) performed by \crep{}. For any real merge action $m\in M(\sigma)$, let \size(m) denote the size of the smaller component that was merged. For an artificial merge action set \size(m)=0.
@@ -459,7 +494,7 @@ In order to show that \ref{eq2} holds, consider three cases:
 
 
 	
-\section{Competitive Ratio}
+\subsection{Competitive Ratio}
 
 \textbf{Note:} The following lemma is the same as lemma 9 in \cite{Avin2015}.
 \begin{lemma}
