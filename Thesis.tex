@@ -1,4 +1,4 @@
-\documentclass[xcolor=dvipsnames, tikz, 11pt]{article}
+\documentclass[xcolor=dvipsnames, tikz, 12pt]{article}
 %\documentclass{beamer}
 \usepackage[left=3cm,right=3cm,top=2cm,bottom=2cm]{geometry} % page settings
 \usepackage{amsmath} % provides many mathematical environments & tools
@@ -45,6 +45,7 @@
 \newcommand{\ovr}{\text{\scriptsize OVR}}
 \newcommand{\final}{\text{\scriptsize FINAL}}
 \newcommand{\opt}{\text{O{\scriptsize PT}}}
+\newcommand{\alg}{\text{A{\scriptsize LG}}}
 
 %commands for input sequence diagrams
 \newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
@@ -63,12 +64,88 @@
 
 %TODO find out journal or equivalent for some references
 
+%outer title page
 \begin{document}
+	\begin{titlepage}
+		\begin{center}
+			\vspace*{1cm}
+			
+			\large
+			Technical University of Munich\\
+			\vspace*{1cm}
+			
+			Department of Informatics\\
+			\vspace*{1cm}
+			
+			Bachelor's Thesis in Informatics\\
+			\vspace*{1cm}
+			
+			\Huge
+			\textbf{Thesis Title}
+			
+			\vspace{2cm}
+			
+			\Large
+			\textbf{Tobias Forner}
+			
+			\vfill
+			
+		\end{center}
+	\end{titlepage}
+
+%page 1
+	\begin{titlepage}
+		\begin{center}
+			\vspace*{1cm}
+			
+			\large
+			Technical University of Munich\\
+			\vspace*{1cm}
+			
+			Department of Informatics\\
+			\vspace*{1cm}
+			
+			Bachelor's Thesis in Informatics\\
+			\vspace*{1cm}
+			
+			\Huge
+			\textbf{Thesis Title}
+			
+			\vspace{2cm}
+			
+			\Large
+			\textbf{Tobias Forner}
+			
+			\vfill
+			
+		\end{center}
+	\end{titlepage}
 	
-	\title{Thesis}
-	\author{Tobias Forner}
-	\date{\today}
-	\maketitle
+	
+	%page 2 (declaration)
+	%TODO add missing information	
+	\thispagestyle{empty}
+	\noindent I confirm that this bachelor's thesis is my own work and I have documented all sources and material used.\nl\nl
+	\begin{center}
+		\noindent\begin{tabular}{cc}
+			\makebox[2.5in]{\hrulefill} & \makebox[2.5in]{\hrulefill}\\
+			Date &	Tobias Forner
+			
+		\end{tabular}
+		
+	\end{center}
+	
+	
+	\clearpage
+	
+	
+	\thispagestyle{empty}
+	\begin{abstract}
+		\ldots
+	\end{abstract}
+	
+	\clearpage
+	\pagenumbering{arabic} 
 %plots for evaluation data, decomp tree with regular alpha
 	%TODO put in real data
 	% A - 
@@ -111,16 +188,32 @@
 		C		 & 428089.812500	& 42036.601562	& 2460.399902	\\
 		%D 		 & 100				& 80 			& 50			\\
 	}\runtimeplot
+
+
+
+
+{
+	\hypersetup{linkcolor=black}
+	\tableofcontents
+	\clearpage
+}
+
+
+\section{Introduction}
 	
 	
 	\section{Problem Definition}
-	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $k$ parts, each of size $l$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.\nl More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.\nl
+	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $k$ parts, each of size $l$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.
+	
+	More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.
+	
 	We are in the realm of competitive analysis and as a result we compare an online algorithm ON to the optimal offline algorithm \opt{}. ON only learns of the requests in the input sequence $\sigma$ as they happen and as a result only knows about the partial sequence $(u_1,v_1),...,(u_t,v_t)$ at time $t$ while \opt{} starts with perfect knowledge of the complete sequence $\sigma$ at time $0$.\nl
-	The goal is to design an online algorithm ALG with a good competitive ratio with regard to \opt{} defined as follows.\nl
+	The goal is to design an online algorithm \alg{} with a good competitive ratio with regard to \opt{} defined as follows.\nl
 	A online algorithm ON is $\rho-competitive$ if there exists a constant $\beta$ such that \begin{align*}
-	ALG(\sigma)\leq\rho\cdot \opt{}(\sigma)+\beta\forall \sigma
+	\alg{}(\sigma)\leq\rho\cdot \opt{}(\sigma)+\beta\forall \sigma
 	\end{align*} 
-	where $ALG(\sigma)$ and $\opt{}(\sigma)$ denote the cost of serving input sequence $\sigma$ of ALG and \opt{} respectively.\nl
+	where $\alg{}(\sigma)$ and $\opt{}(\sigma)$ denote the cost of serving input sequence $\sigma$ of \alg{} and \opt{} respectively.
+	
 	Often we allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\times n/k$ nodes to each server where $\delta>1$.%TODO possibly mention that the algorithm is compared against an offline algorithm without augmentation, i.e. with the default capacities.
 	
 	\section{Related Work}
