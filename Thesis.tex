@@ -81,7 +81,9 @@
 			\vspace*{1cm}
 			
 			\Huge
-			\textbf{Thesis Title}
+			\textbf{Polynomial Time Competitive Repartitioning of Dynamic Graphs}\\
+			
+			\textbf{Kompetitive Repartitionierung Dynamischer Graphen in polynomieller Zeit}
 			
 			\vspace{2cm}
 			
@@ -109,12 +111,26 @@
 			\vspace*{1cm}
 			
 			\Huge
-			\textbf{Thesis Title}
+			\textbf{Polynomial Time Competitive Repartitioning of Dynamic Graphs}\\
+			
+			\vspace{1.5cm}
+			
+			\textbf{Kompetitive Repartitionierung Dynamischer Graphen in polynomieller Zeit}
 			
 			\vspace{2cm}
 			
 			\Large
 			\textbf{Tobias Forner}
+			
+			\vspace{2cm}
+			
+			\large
+			\begin{tabular}{l l}
+				Supervisor: & Prof. Dr. Harald R\"acke\\
+				Advisors: & Prof. Dr. Harald Räcke\\
+				${}$ & Univ.-Prof. Dr. Stefan Schmid\\
+				Submission Date & 15.03.2020
+			\end{tabular}
 			
 			\vfill
 			
@@ -207,8 +223,10 @@
 	
 	More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.
 	
-	We are in the realm of competitive analysis and as a result we compare an online algorithm ON to the optimal offline algorithm \opt{}. ON only learns of the requests in the input sequence $\sigma$ as they happen and as a result only knows about the partial sequence $(u_1,v_1),...,(u_t,v_t)$ at time $t$ while \opt{} starts with perfect knowledge of the complete sequence $\sigma$ at time $0$.\nl
-	The goal is to design an online algorithm \alg{} with a good competitive ratio with regard to \opt{} defined as follows.\nl
+	We are in the realm of competitive analysis and as a result we compare an online algorithm ON to the optimal offline algorithm \opt{}. ON only learns of the requests in the input sequence $\sigma$ as they happen and as a result only knows about the partial sequence $(u_1,v_1),...,(u_t,v_t)$ at time $t$ while \opt{} starts with perfect knowledge of the complete sequence $\sigma$ at time $0$.
+	
+	The goal is to design an online algorithm \alg{} with a good competitive ratio with regard to \opt{} defined as follows.
+	
 	A online algorithm ON is $\rho-competitive$ if there exists a constant $\beta$ such that \begin{align*}
 	\alg{}(\sigma)\leq\rho\cdot \opt{}(\sigma)+\beta\forall \sigma
 	\end{align*} 
@@ -223,18 +241,24 @@
 	
 	\subsection{Learning Variant of BRP}
 	%TODO also have a look at Competitive clustering of stochastic communication patterns on a ring
-	\cite{Henzinger2019} studies a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.\nl
-	\cite{Henzinger2019} present an algorithm for the case where the number of servers is $l=2$ that achieves a competitive ratio of $O((\log n)/\epsilon)$ with augmentation $\epsilon$, i.e. each server has capacity $(1+\epsilon)n/2$ for $\epsilon\in(0,1)$.\nl
-	For the general case of $l$ servers of capacity $(1+\epsilon)n/2$ the authors construct an exponential-time algorithm that achieves a competitive ratio of $\O((l\log n \log l)/\epsilon)$ for $\epsilon\in(0,1/2)$ and also provide a distributed version.\nl
-	Additionally the authors describe a polynomial-time $O((l^2\log n\log l)/\epsilon^2)$-competitive algorithm for the case with general $l$, servers of capacity $(1+\epsilon)n/l$ and $\epsilon\in(0,1/2)$.\nl
+	\cite{Henzinger2019} studies a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.
+	
+	\cite{Henzinger2019} present an algorithm for the case where the number of servers is $l=2$ that achieves a competitive ratio of $O((\log n)/\epsilon)$ with augmentation $\epsilon$, i.e. each server has capacity $(1+\epsilon)n/2$ for $\epsilon\in(0,1)$.
+	
+	For the general case of $l$ servers of capacity $(1+\epsilon)n/2$ the authors construct an exponential-time algorithm that achieves a competitive ratio of $\O((l\log n \log l)/\epsilon)$ for $\epsilon\in(0,1/2)$ and also provide a distributed version.
+	Additionally the authors describe a polynomial-time $O((l^2\log n\log l)/\epsilon^2)$-competitive algorithm for the case with general $l$, servers of capacity $(1+\epsilon)n/l$ and $\epsilon\in(0,1/2)$.
+	
 	It is important to stress that the assumption that the requests reveal a perfect partitioning of the communication nodes is not applicable for most practical applications and thus it is important to study the general BRP problem without restricting $\sigma$.
 	
 	
 	\section{Problems With Analysis in Previous Work}
 	\label{flawsSection}
-	The problem in the analysis of \cite{Avin2015a} arises due to their usage of the concept of $F(c)$: This contains only edges incident to components from $S(c)$ that arrived after the involved components from $S(c)$ were created by \crep{}.In the analysis it is assumed that only those edges that are contained in $F(c)$ can contribute to the creation of component $c$. As we will show that is not the case and as a result it is very challenging to separate the costs of \opt{} that are due to the requests that actually led to the creation of $c$.\nl
-	In order for the approach in \cite{Avin2015a} to work the different sets $F(c)$ that occur as \crep{} handles input $\sigma$ need to form a partition of all requests such that each request can be mapped to one unique set $F(c)$. Only in this case it is possible to lower bound the cost of \crep{} via the requests in $\bigcup_{c\in\del{}}F(c)$.\nl
-	\cref{exNewCrep} shows an example sequence of requests for which this approach does not work. The diagram shows horizontal lines, each representing one of the vertices. A vertical line represents a communication request between its end points. For example the sequence shown contains a communication request between nodes 1 and 2 at time $t=5$.\nl
+	The problem in the analysis of \cite{Avin2015a} arises due to their usage of the concept of $F(c)$: This contains only edges incident to components from $S(c)$ that arrived after the involved components from $S(c)$ were created by \crep{}.In the analysis it is assumed that only those edges that are contained in $F(c)$ can contribute to the creation of component $c$. As we will show that is not the case and as a result it is very challenging to separate the costs of \opt{} that are due to the requests that actually led to the creation of $c$.
+	
+	In order for the approach in \cite{Avin2015a} to work the different sets $F(c)$ that occur as \crep{} handles input $\sigma$ need to form a partition of all requests such that each request can be mapped to one unique set $F(c)$. Only in this case it is possible to lower bound the cost of \crep{} via the requests in $\bigcup_{c\in\del{}}F(c)$.\
+	
+	\cref{exNewCrep} shows an example sequence of requests for which this approach does not work. The diagram shows horizontal lines, each representing one of the vertices. A vertical line represents a communication request between its end points. For example the sequence shown contains a communication request between nodes 1 and 2 at time $t=5$.
+	
 	In this sequence the first two requests are not contained in $F(c)$ for any component $c$ as nodes 3 and 4 were part of other components that were eventually deleted by \crep{} before finally being merged at time $t=15$.\nl
 	
 	\begin{figure}
@@ -269,7 +293,8 @@
 		\caption{problem in the new version}\label{exNewCrep}	
 	\end{figure}
 	
-	In an older version (\cite{Avin2015}) of the paper mentioned above we have also discovered some problems. In this version merges and the component structure is very similar, but upon a deletion of a component the algorithm not only deletes inner edges but also those that leave the component, i.e. all edges $e={u,v}$ are deleted where $u$ or $v$ are inside the component. However the additional deletions of edges that are leaving the component are not accounted for in the analysis. We show that this approach may lead to scenarios where the amount of edges that are deleted that leave the component may greatly exceed the amount of inner edges. Just like in the case above this fact makes it very challenging to attribute specific costs to \opt{} as this makes it very difficult to uniquely identify the actions of \opt{} that may lead to a reduction of communication costs with a given component that \crep{} discovers during its execution. This complicates the analysis to the extent that we have not been able to rectify it.\nl
+	In an older version (\cite{Avin2015}) of the paper mentioned above we have also discovered some problems. In this version merges and the component structure is very similar, but upon a deletion of a component the algorithm not only deletes inner edges but also those that leave the component, i.e. all edges $e={u,v}$ are deleted where $u$ or $v$ are inside the component. However the additional deletions of edges that are leaving the component are not accounted for in the analysis. We show that this approach may lead to scenarios where the amount of edges that are deleted that leave the component may greatly exceed the amount of inner edges. Just like in the case above this fact makes it very challenging to attribute specific costs to \opt{} as this makes it very difficult to uniquely identify the actions of \opt{} that may lead to a reduction of communication costs with a given component that \crep{} discovers during its execution. This complicates the analysis, but we show in \cref{analysisSection} how it can be adapted while preserving the competitive ratio.
+	
 	\cref{exOldCrep} illustrates an example of the problems mentioned above for this older version of \crep{}. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \crep{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until that node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence. 
 
 
@@ -316,9 +341,10 @@
 	In this section we give a high-level overview of the algorithm. Implementation details will be discussed in greater detail in \cref{implDetSection}.
 	
 	\subsection{Overview}
-	The general idea of the algorithm is to maintain a second-order partitioning of the nodes into \textit{communication components} which are sets of nodes that communicated frequently. As more requests from the input sequence $\sigma$ are revealed to the algorithm the components grow in size until the algorithm discovers a component that is too big and hence decides to delete it.\nl
+	The general idea of the algorithm is to maintain a second-order partitioning of the nodes into \textit{communication components} which are sets of nodes that communicated frequently. As more requests from the input sequence $\sigma$ are revealed to the algorithm the components grow in size until the algorithm discovers a component that is too big and hence decides to delete it.
 	
-	More formally, initially each node is assigned to a singleton component, but as the algorithm is given the input sequence $\sigma$ new communication patterns unfold which the algorithm keeps track of by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of paid communication requests between the end points of each edge, i.e. for edge $e=\{u,v\}$ $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is paid if the nodes are located o different servers at the time of the request.\nl
+	More formally, initially each node is assigned to a singleton component, but as the algorithm is given the input sequence $\sigma$ new communication patterns unfold which the algorithm keeps track of by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of paid communication requests between the end points of each edge, i.e. for edge $e=\{u,v\}$ $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is paid if the nodes are located o different servers at the time of the request.
+	
 	Our approach defines sets of nodes that communicate frequently as those that represent subgraphs with high connectivity, in this case those with connectivity at least $\alpha$.
 	
 	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the subset has cardinality greater than $k$ the algorithm instead splits the components whose nodes are contained in $S$ into singleton components and deletes all edges that were contained in $S$, i.e. every edge where both end points are elements of $S$.
@@ -357,12 +383,14 @@
 %TODO define set of components that is merged at time t
 
 \section{New Analysis}
+\label{analysisSection}
 
 \subsection{Algorithm Definitions}
 
 \begin{defi}
 	Define for any subset S of components $w(S)$ as the total weight of all edges between nodes of S.
 \end{defi}
+
 Note that such an edge can only have positive weight if its endpoints are in different components.
 
 \begin{defi}
@@ -382,8 +410,10 @@ Note that such an edge can only have positive weight if its endpoints are in dif
 	At any time $t$ after \crep{} performed its merge and delete actions all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges.
 \end{lemma}
 
-\textit{Proof.} We proof the lemma by an induction on steps. The lemma holds trivially at time 0.\nl
-Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a true subset S of components with connectivity at least $\alpha$. We may assume that t is the earliest time for which S has connectivity $\alpha$.\nl 
+\textit{Proof.} We proof the lemma by an induction on steps. The lemma holds trivially at time 0.
+
+Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a true subset S of components with connectivity at least $\alpha$. We may assume that t is the earliest time for which S has connectivity $\alpha$.
+
 Then the incrementation of the weight of edge e at time t raised the connectivity of S, but S was not merged into the $\alpha$-connected component C that was created at time t and must hence also contain the endpoints of e. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S. 
 %TODO REPHRASE to differentiate set of components that was merged and the resulting component.
 
@@ -430,7 +460,7 @@ We start the analysis by bounding the communication cost of \crep{} that is due 
 	With augmentation $2+\epsilon$, \crep{} pays at most communication cost $|C|\cdot\alpha$ for requests in $core(C)$ where $C\in\del{}(\sigma)$.
 \end{lemma}
 
-\textit{Proof.} The lemma follows directly from \cref{cut_lemma_upper} due to the fact that component sets of connectivity $\alpha$ get merged immediately by \crep{} as shown in \cref{mergeable_lemma}.\nl
+\textit{Proof.} The lemma follows directly from \cref{cut_lemma_upper} due to the fact that component sets of connectivity $\alpha$ get merged immediately by \crep{} as shown in \cref{mergeable_lemma}.\qed\nl
 
 Together with the fact that \crep{} pays for all requests in $halo(C)$ for deleted components $C$ this gives us  an upper bound on the costs of \crep{} together with the cost incurred to \crep{} due to requests and migrations of the components that do not get deleted during its execution, i.e. those components that are present after all requests from $\sigma$ have been processed.\qed\nl
 
@@ -456,6 +486,26 @@ Finally we summarize our results in the following lemma.
 
 \subsection{Lower Bound on \opt{}}
 We split the analysis of the cost \opt{} has to pay into two parts. First we examine the cost incurred to \opt{} due to requests that led \crep{} to create (and delete) a component $C\in\del{}(\sigma)$. Then we provide a lower bound on the cost incurred to \opt{} due to requests from $halo(C)$ for $C\in\del{}(\sigma)$.
+
+\begin{lemma}
+	\opt{} pays at least $\lceil\frac{|C|}{k}\rceil\cdot\alpha/2$ due to requests from $core(C)$ for any $C\in\del{}(\sigma)$.
+\end{lemma}
+
+\textit{Proof.} We fix $C\in\del{}(\sigma)$ arbitrarily and observe that any solution that does not move any vertices of $C$ during the epoch of $C$ incurs cost at least $\lceil\frac{|C|}{k}\rceil\cdot\alpha/2$ as the nodes of $C$ need to be distributed on at least $\lceil\frac{|C|}{k}\rceil$ servers and \cref{cut_lemma} gives a suitable lower bound on the weight between these servers and hence also on the number of communication requests an algorithm which chooses this static configuration must pay for.
+
+We show that this static solution can not be improved via migrations. Observe that a migration involving only one node that is mapped to a server from the static configuration may only increase the communication costs for requests in $core(C)$ as it increases the number of partitions in the result of \cref{cut_lemma}. A migration between two servers used in the static configuration may only decrease the weight between the two servers involved and incurs cost $2\alpha$ to \opt{}. Note that the proof of  \cref{cut_lemma} only requires the weight between one component set S and all the other component sets that together form a mergeable set to be at least $\alpha$. If \opt{} now performs a swap of two nodes we can attribute cost $2\alpha$ to \opt{} for the connection between these two servers which may only increase the cost we can attribute to \opt{}. Hence the lemma follows.\qed\nl
+
+\begin{lemma}
+	\opt{} pays at least $\sum_{C\in\del{}(\sigma)}|halo(C)|/k$ for serving requests from\nl $\bigcup_{C\in\del{}(\sigma)}halo(C)=:H$.
+\end{lemma}
+
+\textit{Proof.} First note that we may ignore requests from $H$ that both \crep{} and \opt{} pay for as including these may only give \crep{} an advantage in our analysis.
+
+In the following we only consider those requests from $H$ that \crep{} pays for while \opt{} does not. We relate the number of those requests that \opt{} does not pay to the number of migrations \opt{} performs by assigning each request from $H$ to the next migration performed by \opt{} that moves a node involved in the request.
+
+We now bound the number of requests from $H$ \opt{} may be able to serve without cost by assigning nodes to servers optimally. Consider all requests from $H$ that happen between nodes that \opt{} has placed on the same server between \opt{} migrations that involve nodes from that server. As the requests from $H$ have not led \crep{} to perform a migration there can be at most $(k-1)\cdot\alpha$ such requests before \opt{} changes the nodes mapped to the server by performing a migration. As this migration incurs cost $2\alpha$ to \opt{} we conclude that \opt{} may only improve its cost by a factor of $k$ over the cost paid by \crep{} for serving requests from $H$.\qed\nl
+
+\subsection{Competitive Ratio}
 
 
 %TODO update as necessary
@@ -490,7 +540,7 @@ We split the analysis of the cost \opt{} has to pay into two parts. First we exa
 	\begin{defi}
 		Define $Y_c$ as the set of clusters containing nodes of $c$ in the solution of \opt after \opt performs its migartions (if any) at time $\tau(c)$.
 	\end{defi}
-	Then the total cost of \opt can be lower-bounded: $\opt\leq\sum_c \opt(c)$.\nl\nl	
+	Then the total cost of \opt{} can be lower-bounded: $\opt\leq\sum_c \opt(c)$.\nl\nl	
 	
 	%TODO remove this later
 	\textbf{Note:} The following lemma is a changed from lemma 5 in \cite{Avin2015} in order to account for the fact that the connectivity-based approach only guarantees at least weight $|B|\cdot\alpha/2$ between different bundles whereas the \crep{}-density approach from \cite{Avin2015} guarantees a higher edge weight of $(|B|-1)\cdot\alpha$.
@@ -813,8 +863,9 @@ In the next section we discuss the general distribution of the total costs of ea
 Both ParMetis as well as our decomposition algorithm produce significantly more migration cost than communication cost while the static algorithm predominantly pays for communication. This shows that the dynamic algorithms tend to migrate too much while the static implementation is restricted to only migrate once to a static configuration it finds suitable and as a result has to pay more for communication. This also shows that there is potential to refine the dynamic implementations in such a way that they produce more balanced, and hopefully also less, cost overall.
 
 \clearpage %move references to the back
-\bibliography{../../Dropbox/ThesisPapers/ThesisBibTex}
-\bibliographystyle{plain}                                
-\addcontentsline{toc}{chapter}{References}  
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{plain}
+\bibliography{../../Dropbox/ThesisPapers/ThesisBibTex}                             
+
 	
 \end{document}
