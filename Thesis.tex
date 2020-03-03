@@ -486,10 +486,10 @@ Finally we summarize our results in the following lemma.
 %TODO clean up this lemma statement
 \begin{lemma}
 	\label{crep_upper_bound}
-	With augmentation $2+\epsilon$, \crep{} pays at most cost $2\cdot\sum_{C\in\del{}(\sigma)}|C|\cdot\log k\cdot\alpha+|halo(C)|+2\cdot\sum_{C\in \finalComps(\sigma)}|C|\cdot\log k\cdot\alpha+\finalWeights$.
+	With augmentation $2+\epsilon$, \crep{} pays at most cost $2\cdot\sum_{C\in\del{}(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+|\halo(C)|+2\cdot\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\finalWeights$.
 \end{lemma}
 %TODO make this proof more understandable by starting with a more genral statement and plugging in the previous lemmas
-\textit{Proof.} Note that the communication costs from \cref{core_comm_upper} are bounded by $\sum_{C\in\del{}(\sigma)}|C|\cdot k\cdot\alpha$. Similarly we can bound the migration costs due to components from $\finalComps$ by $\sum_{C\in \finalComps(\sigma)}|C|\cdot\log k\cdot\alpha$. Accounting for the requests in $\halo(C)$ for a deleted component $C$ and weight of the edges that are present at the end of the execution of \crep{} leads to the lemma.\qed
+\textit{Proof.} Note that the communication costs from \cref{core_comm_upper} are bounded by $\sum_{C\in\del{}(\sigma)}|C|\cdot k\cdot\alpha$. Similarly we can bound the migration costs due to components from $\finalComps$ by $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha$. Accounting for the requests in $\halo(C)$ for a deleted component $C$ and weight of the edges that are present at the end of the execution of \crep{} leads to the lemma.\qed
 
 
 \subsection{Lower Bound on \opt{}}
