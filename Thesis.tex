@@ -46,6 +46,14 @@
 \newcommand{\final}{\text{\scriptsize FINAL}}
 \newcommand{\opt}{\text{O{\scriptsize PT}}}
 \newcommand{\alg}{\text{A{\scriptsize LG}}}
+\newcommand{\core}{\text{\scriptsize CORE}}
+\newcommand{\halo}{\text{\scriptsize HALO}}
+\newcommand{\req}{\text{\scriptsize REQ}}
+\newcommand{\finalComps}{\text{\scriptsize FINAL-COMPS}}
+\newcommand{\finalWeights}{\text{\scriptsize FINAL-WEIGHTS}}
+\newcommand{\epoch}{\text{\scriptsize EPOCH}}
+\newcommand{\delTime}{\text{\scriptsize DEL-TIME}}
+\newcommand{\reqTime}{\text{\scriptsize TIME}}
 
 %commands for input sequence diagrams
 \newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
@@ -447,56 +455,56 @@ Now consider the fact that each component must have degree at least $\alpha$ wit
 
 We define the following notions for a component $C\in\del{}(\sigma)$, i.e. the subgraph induced by the nodes of $C$ has connectivity at least $\alpha$ and $C$ consists of more than $k$ nodes:
 
-Let $epoch(C)$ denote the (node, time) pairs of nodes in $C$ starting at the time after the time $\tau(node)$ when $n$ was last turned into a singleton component, i.e. $epoch(C)=\bigcup_{n\in nodes(C)}\{n\}\times\{\tau(n)+1,...,\text{del-time}(C)\}$. This allows us to uniquely assign each node to a deleted component $C$ at each point in time $t$ (except for nodes in components that persist until the end of sequence $\sigma$).
+Let $\epoch{}(C)$ denote the (node, time) pairs of nodes in $C$ starting at the time after the time $\tau(node)$ when $node$ was last turned into a singleton component, i.e. $\epoch{}(C)=\bigcup_{n\in nodes(C)}\{n\}\times\{\tau(n)+1,...,\delTime{}(C)\}$. This allows us to uniquely assign each node to a deleted component $C$ at each point in time $t$ (except for nodes in components that persist until the end of sequence $\sigma$).
 
-We assign all requests to $epoch(C)$ whose corresponding requests are deleted because of the deletion of component $C$ and call the set of those requests $req(C)$.
-We split the requests from $req(C)$ into two sets: $core(C)$ contains all requests for which both nodes have already been assigned to $C$ at the time of the request, i.e. $core(C)=\{r=\{u,v\}\in\sigma| (u,time(r))\in epoch(C)\text{ and } (v, time(r))\in epoch(C)\}$. These are the requests that led to the creation of component $C$. 
-$halo(C)$ contains all requests from $req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $halo(C)=req(C)\backslash core(C)$.
+We assign all requests to $\epoch(C)$ whose corresponding requests are deleted because of the deletion of component $C$ and call the set of those requests $\req(C)$.
+We split the requests from $\req{}(C)$ into two sets: $\core(C)$ contains all requests for which both nodes have already been assigned to $C$ at the time of the request, i.e. $\core(C)=\{r=\{u,v\}\in\sigma| (u,\reqTime(r))\in \epoch(C)\text{ and } (v, \reqTime(r))\in \epoch(C)\}$. These are the requests that led to the creation of component $C$. 
+$\halo(C)$ contains all requests from $\req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $\halo(C)=\req(C)\backslash \core(C)$.
 
-We start the analysis by bounding the communication cost of \crep{} that is due to serving requests from $core(C)$ for $C\in\del{}(\sigma)$.
+We start the analysis by bounding the communication cost of \crep{} that is due to serving requests from $\core(C)$ for $C\in\del{}(\sigma)$.
 
 \begin{lemma}
 	\label{core_comm_upper}
-	With augmentation $2+\epsilon$, \crep{} pays at most communication cost $|C|\cdot\alpha$ for requests in $core(C)$ where $C\in\del{}(\sigma)$.
+	With augmentation $2+\epsilon$, \crep{} pays at most communication cost $|C|\cdot\alpha$ for requests in $\core(C)$ where $C\in\del{}(\sigma)$.
 \end{lemma}
 
 \textit{Proof.} The lemma follows directly from \cref{cut_lemma_upper} due to the fact that component sets of connectivity $\alpha$ get merged immediately by \crep{} as shown in \cref{mergeable_lemma}.\qed\nl
 
-Together with the fact that \crep{} pays for all requests in $halo(C)$ for deleted components $C$ this gives us  an upper bound on the costs of \crep{} together with the cost incurred to \crep{} due to requests and migrations of the components that do not get deleted during its execution, i.e. those components that are present after all requests from $\sigma$ have been processed.\qed\nl
+Together with the fact that \crep{} pays for all requests in $\halo(C)$ for deleted components $C$ this gives us  an upper bound on the costs of \crep{} together with the cost incurred to \crep{} due to requests and migrations of the components that do not get deleted during its execution, i.e. those components that are present after all requests from $\sigma$ have been processed.\qed\nl
 
 We continue our analysis by bounding the migration cost of \crep{} in the following lemma.
 %TODO specify base of the logarithm
 \begin{lemma}
-	With augmentation $2+\epsilon$, \crep{} pays at most migration costs of $\sum_{C\in\del{}(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in FINAL-COMPS(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha$.
+	With augmentation $2+\epsilon$, \crep{} pays at most migration costs of $\sum_{C\in\del{}(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha$.
 \end{lemma}
 
 \textit{Proof.} First note that \crep{} only performs migrations when it merges components.
-We fix a component $C\in\del{}(\sigma)\cup FINAL-COMPS(\sigma)$ and bound the number of times each node of $C$ is moved as \crep{} processes the requests that led to the creation of $C$. As \crep{} only reserves additional space $\lfloor\epsilon\cdot|B|\rfloor$ for components of size at least $2/\epsilon$ for each component $B$ and only moves component $B$ when a merge results in a component of size more than $(1+\epsilon)*|B|$ each node of $C$ is moved at most
+We fix a component $C\in\del{}(\sigma)\cup \finalComps(\sigma)$ and bound the number of times each node of $C$ is moved as \crep{} processes the requests that led to the creation of $C$. As \crep{} only reserves additional space $\lfloor\epsilon\cdot|B|\rfloor$ for components of size at least $2/\epsilon$ for each component $B$ and only moves component $B$ when a merge results in a component of size more than $(1+\epsilon)*|B|$ each node of $C$ is moved at most
 $(2/\epsilon+1)+\log k$ times. Summing over all nodes in $C$ bounds the number of migrations by $|C|\cdot((2/\epsilon+1) \log k)$ and leads to the desired bound on the migration costs as each node migration incurs cost $\alpha$ to \crep{}.\qed\nl
 
 Finally we summarize our results in the following lemma.
 %TODO clean up this lemma statement
 \begin{lemma}
 	\label{crep_upper_bound}
-	With augmentation $2+\epsilon$, \crep{} pays at most cost $2\cdot\sum_{C\in\del{}(\sigma)}|C|\cdot\log k\cdot\alpha+|halo(C)|+2\cdot\sum_{C\in FINAL-COMPS(\sigma)}|C|\cdot\log k\cdot\alpha+FINAL-WEIGHTS$.
+	With augmentation $2+\epsilon$, \crep{} pays at most cost $2\cdot\sum_{C\in\del{}(\sigma)}|C|\cdot\log k\cdot\alpha+|halo(C)|+2\cdot\sum_{C\in \finalComps(\sigma)}|C|\cdot\log k\cdot\alpha+\finalWeights$.
 \end{lemma}
 %TODO make this proof more understandable by starting with a more genral statement and plugging in the previous lemmas
-\textit{Proof.} Note that the communication costs from \cref{core_comm_upper} are bounded by $\sum_{C\in\del{}(\sigma)}|C|\cdot k\cdot\alpha$. Similarly we can bound the migration costs due to components from $FINAL-COMPS$ by $\sum_{C\in FINAL-COMPS(\sigma)}|C|\cdot\log k\cdot\alpha$. Accounting for the requests in $halo(C)$ for a deleted component $C$ and weight of the edges that are present at the end of the execution of \crep{} leads to the lemma.\qed
+\textit{Proof.} Note that the communication costs from \cref{core_comm_upper} are bounded by $\sum_{C\in\del{}(\sigma)}|C|\cdot k\cdot\alpha$. Similarly we can bound the migration costs due to components from $\finalComps$ by $\sum_{C\in \finalComps(\sigma)}|C|\cdot\log k\cdot\alpha$. Accounting for the requests in $\halo(C)$ for a deleted component $C$ and weight of the edges that are present at the end of the execution of \crep{} leads to the lemma.\qed
 
 
 \subsection{Lower Bound on \opt{}}
-We split the analysis of the cost \opt{} has to pay into two parts. First we examine the cost incurred to \opt{} due to requests that led \crep{} to create (and delete) a component $C\in\del{}(\sigma)$. Then we provide a lower bound on the cost incurred to \opt{} due to requests from $halo(C)$ for $C\in\del{}(\sigma)$.
+We split the analysis of the cost \opt{} has to pay into two parts. First we examine the cost incurred to \opt{} due to requests that led \crep{} to create (and delete) a component $C\in\del{}(\sigma)$. Then we provide a lower bound on the cost incurred to \opt{} due to requests from $\halo(C)$ for $C\in\del{}(\sigma)$.
 
 \begin{lemma}
-	\opt{} pays at least $\lceil\frac{|C|}{k}\rceil\cdot\alpha/2$ due to requests from $core(C)$ for any $C\in\del{}(\sigma)$.
+	\opt{} pays at least $\lceil\frac{|C|}{k}\rceil\cdot\alpha/2$ due to requests from $\core(C)$ for any $C\in\del{}(\sigma)$.
 \end{lemma}
 
 \textit{Proof.} We fix $C\in\del{}(\sigma)$ arbitrarily and observe that any solution that does not move any vertices of $C$ during the epoch of $C$ incurs cost at least $\lceil\frac{|C|}{k}\rceil\cdot\alpha/2$ as the nodes of $C$ need to be distributed on at least $\lceil\frac{|C|}{k}\rceil$ servers and \cref{cut_lemma} gives a suitable lower bound on the weight between these servers and hence also on the number of communication requests an algorithm which chooses this static configuration must pay for.
 
-We show that this static solution can not be improved via migrations. Observe that a migration involving only one node that is mapped to a server from the static configuration may only increase the communication costs for requests in $core(C)$ as it increases the number of partitions in the result of \cref{cut_lemma}. A migration between two servers used in the static configuration may only decrease the weight between the two servers involved and incurs cost $2\alpha$ to \opt{}. Note that the proof of  \cref{cut_lemma} only requires the weight between one component set S and all the other component sets that together form a mergeable set to be at least $\alpha$. If \opt{} now performs a swap of two nodes we can attribute cost $2\alpha$ to \opt{} for the connection between these two servers which may only increase the cost we can attribute to \opt{}. Hence the lemma follows.\qed\nl
+We show that this static solution can not be improved via migrations. Observe that a migration involving only one node that is mapped to a server from the static configuration may only increase the communication costs for requests in $\core(C)$ as it increases the number of partitions in the result of \cref{cut_lemma}. A migration between two servers used in the static configuration may only decrease the weight between the two servers involved and incurs cost $2\alpha$ to \opt{}. Note that the proof of  \cref{cut_lemma} only requires the weight between one component set S and all the other component sets that together form a mergeable set to be at least $\alpha$. If \opt{} now performs a swap of two nodes we can attribute cost $2\alpha$ to \opt{} for the connection between these two servers which may only increase the cost we can attribute to \opt{}. Hence the lemma follows.\qed\nl
 
 \begin{lemma}
-	\opt{} pays at least $\sum_{C\in\del{}(\sigma)}|halo(C)|/k$ for serving requests from\nl $\bigcup_{C\in\del{}(\sigma)}halo(C)=:H$.
+	\opt{} pays at least $\sum_{C\in\del{}(\sigma)}|\halo(C)|/k$ for serving requests from\nl $\bigcup_{C\in\del{}(\sigma)}\halo(C)=:H$.
 \end{lemma}
 
 \textit{Proof.} First note that we may ignore requests from $H$ that both \crep{} and \opt{} pay for as including these may only give \crep{} an advantage in our analysis.
