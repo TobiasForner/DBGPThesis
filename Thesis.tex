@@ -14,10 +14,7 @@
 \usepackage[nameinlink, capitalize]{cleveref} %used for cross theorem references
 \setlength{\parindent}{5mm}
 \usepackage[english]{babel}
-%\usepackage{algpseudocode}
-
-%\algnewcommand\algorithmicforeach{\textbf{for each}}
-%\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+\usepackage{verbatim}
 
 \usepackage{tikz}%used for examples for problems in earlier analysis
 
@@ -74,94 +71,8 @@
 
 %outer title page
 \begin{document}
-	\begin{titlepage}
-		\begin{center}
-			\vspace*{1cm}
-			
-			\large
-			Technical University of Munich\\
-			\vspace*{1cm}
-			
-			Department of Informatics\\
-			\vspace*{1cm}
-			
-			Bachelor's Thesis in Informatics\\
-			\vspace*{1cm}
-			
-			\Huge
-			\textbf{Polynomial Time Competitive Repartitioning of Dynamic Graphs}\\
-			
-			%\textbf{Kompetitive Repartitionierung Dynamischer Graphen in polynomieller Zeit}
-			
-			\vspace{2cm}
-			
-			\Large
-			\textbf{Tobias Forner}
-			
-			\vfill
-			
-		\end{center}
-	\end{titlepage}
-
-%page 1
-	\begin{titlepage}
-		\begin{center}
-			\vspace*{1cm}
-			
-			\large
-			Technical University of Munich\\
-			\vspace*{1cm}
-			
-			Department of Informatics\\
-			\vspace*{1cm}
-			
-			Bachelor's Thesis in Informatics\\
-			\vspace*{1cm}
-			
-			\Huge
-			\textbf{Polynomial Time Competitive Repartitioning of Dynamic Graphs}\\
-			
-			\vspace{1.5cm}
-			
-			\textbf{Kompetitive Repartitionierung Dynamischer Graphen in polynomieller Zeit}
-			
-			\vspace{2cm}
-			
-			\Large
-			\textbf{Tobias Forner}
-			
-			\vspace{2cm}
-			
-			\large
-			\begin{tabular}{l l}
-				Supervisor: & Prof. Dr. Harald R\"acke\\
-				Advisors: & Prof. Dr. Harald Räcke\\
-				${}$ & Univ.-Prof. Dr. Stefan Schmid\\
-				Submission Date & 15.03.2020
-			\end{tabular}
-			
-			\vfill
-			
-		\end{center}
-	\end{titlepage}
 	
-	
-	%page 2 (declaration)
-	%TODO add missing information	
-	\thispagestyle{empty}
-	\noindent I confirm that this bachelor's thesis is my own work and I have documented all sources and material used.\nl\nl
-	\begin{center}
-		\noindent\begin{tabular}{cc}
-			\makebox[2.5in]{\hrulefill} & \makebox[2.5in]{\hrulefill}\\
-			Date &	Tobias Forner
-			
-		\end{tabular}
-		
-	\end{center}
-	
-	
-	\clearpage
-	
+	\input{title/title_page}	
 	
 	\thispagestyle{empty}
 	\begin{abstract}
@@ -521,7 +432,7 @@ We now bound the number of requests from $H$ \opt{} may be able to serve without
 \section{Old Analysis}
 \textbf{Note:} The following analysis is mostly the same as in \cite{Avin2015}.	
 
-	\subsection{Lower Bound on OPT}
+	\subsection{Lower Bound on \opt{}}
 	\begin{defi}
 		Define the time of creation of a component $c$ managed by \crep{} as $\tau(c)$. For a non-singleton component c it is the time at which other components were merged resulting in c, if c is a singleton component $\tau(c)$ is 0 if c existed at time 0 and the last time a component containing c was deleted otherwise.
 	\end{defi}
@@ -546,9 +457,9 @@ We now bound the number of requests from $H$ \opt{} may be able to serve without
 	\end{defi}
 
 	\begin{defi}
-		Define $Y_c$ as the set of clusters containing nodes of $c$ in the solution of \opt after \opt performs its migartions (if any) at time $\tau(c)$.
+		Define $Y_c$ as the set of clusters containing nodes of $c$ in the solution of \opt{} after \opt{} performs its migrations (if any) at time $\tau(c)$.
 	\end{defi}
-	Then the total cost of \opt{} can be lower-bounded: $\opt\leq\sum_c \opt(c)$.\nl\nl	
+	Then the total cost of \opt{} can be lower-bounded: $\opt(\sigma)\leq\sum_c \opt(c)$.\nl\nl	
 	
 	%TODO remove this later
 	\textbf{Note:} The following lemma is a changed from lemma 5 in \cite{Avin2015} in order to account for the fact that the connectivity-based approach only guarantees at least weight $|B|\cdot\alpha/2$ between different bundles whereas the \crep{}-density approach from \cite{Avin2015} guarantees a higher edge weight of $(|B|-1)\cdot\alpha$.
