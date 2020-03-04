@@ -51,6 +51,7 @@
 \newcommand{\epoch}{\text{\scriptsize EPOCH}}
 \newcommand{\delTime}{\text{\scriptsize DEL-TIME}}
 \newcommand{\reqTime}{\text{\scriptsize TIME}}
+\newcommand{\comps}{\text{\scriptsize COMPS}}
 
 %commands for input sequence diagrams
 \newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
@@ -386,7 +387,7 @@ Together with the fact that \crep{} pays for all requests in $\halo(C)$ for dele
 We continue our analysis by bounding the migration cost of \crep{} in the following lemma.
 %TODO specify base of the logarithm
 \begin{lemma}
-	With augmentation $2+\epsilon$, \crep{} pays at most migration costs of $\sum_{C\in\del{}(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha$.
+	With augmentation $2+\epsilon$, \crep{} pays at most migration costs of\nl $\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha$.
 \end{lemma}
 
 \textit{Proof.} First note that \crep{} only performs migrations when it merges components.
@@ -394,10 +395,10 @@ We fix a component $C\in\del{}(\sigma)\cup \finalComps(\sigma)$ and bound the nu
 $(2/\epsilon+1)+\log k$ times. Summing over all nodes in $C$ bounds the number of migrations by $|C|\cdot((2/\epsilon+1) \log k)$ and leads to the desired bound on the migration costs as each node migration incurs cost $\alpha$ to \crep{}.\qed\nl
 
 Finally we summarize our results in the following lemma.
-%TODO clean up this lemma statement
+
 \begin{lemma}
 	\label{crep_upper_bound}
-	With augmentation $2+\epsilon$, \crep{} pays at most cost $2\cdot\sum_{C\in\del{}(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+|\halo(C)|+2\cdot\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\finalWeights$.
+	With augmentation $2+\epsilon$, \crep{} pays at most cost\nl $2\cdot\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+|\halo(C)|+\finalWeights(\sigma)$.
 \end{lemma}
 %TODO make this proof more understandable by starting with a more genral statement and plugging in the previous lemmas
 \textit{Proof.} Note that the communication costs from \cref{core_comm_upper} are bounded by $\sum_{C\in\del{}(\sigma)}|C|\cdot k\cdot\alpha$. Similarly we can bound the migration costs due to components from $\finalComps$ by $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha$. Accounting for the requests in $\halo(C)$ for a deleted component $C$ and weight of the edges that are present at the end of the execution of \crep{} leads to the lemma.\qed
@@ -424,10 +425,34 @@ In the following we only consider those requests from $H$ that \crep{} pays for 
 
 We now bound the number of requests from $H$ \opt{} may be able to serve without cost by assigning nodes to servers optimally. Consider all requests from $H$ that happen between nodes that \opt{} has placed on the same server between \opt{} migrations that involve nodes from that server. As the requests from $H$ have not led \crep{} to perform a migration there can be at most $(k-1)\cdot\alpha$ such requests before \opt{} changes the nodes mapped to the server by performing a migration. As this migration incurs cost $2\alpha$ to \opt{} we conclude that \opt{} may only improve its cost by a factor of $k$ over the cost paid by \crep{} for serving requests from $H$.\qed\nl
 
+We obtain the final lower bound on the cost of \opt{} by combining the results of the previous two lemmas. Note that migrations may allow \opt{} to both reduce the cost associated with $\core(C)$ and those from $\halo(B)$ for $B,C\in\del(\sigma)$.
+
+\begin{lemma}
+	\label{opt_lower_bound}
+	$\opt{}(\sigma)\geq1/2\sum_{C\in\del{}(\sigma)}(\lceil\frac{|C|}{k}\rceil\cdot\alpha/2+|\halo(C)|/k)$.
+\end{lemma}
+
 \subsection{Competitive Ratio}
+In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_lower_bound} to obtain the following theorem.
+
+\begin{theo}
+	With augmentation $(2+\epsilon)$ the competitive ratio of \crep{} is in $O(k \log k)$.
+\end{theo}
+
+\textit{Proof.} We arbitrarily fix an input sequence $\sigma$ and use our previous results to bound the competitive ratio of \crep{}. We define $\comps(\sigma):=\del{}(\sigma)\cup\finalComps(\sigma)$ for readability.
+%TODO find out why crep looks weird here
+\begin{align*}
+\frac{\crep{}(\sigma)}{\opt(\sigma)} &\leq\frac{2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+|\halo(C)|+\finalWeights(\sigma)}{1/2\sum_{C\in\del{}(\sigma)}(\lceil\frac{|C|}{k}\rceil\cdot\alpha/2+|\halo(C)|/k)}\\
+&\leq k \log k\frac{2\cdot\sum_{C\in\del(\sigma)}|C|\cdot(2/\epsilon+1) \cdot\alpha+|\halo(C)|}{1/2\sum_{C\in\del{}(\sigma)}{|C|\cdot\alpha/2+|\halo(C)|}}+\beta\\
+& = O(k \log k) +\beta
+\end{align*}
+
+where $\beta=\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\finalWeights(\sigma)$.
+
+To obtain the bound on $\beta$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta\in O(k \log k)$ with which we arrive at the theorem statement.\qed
 
 
-%TODO update as necessary
+\begin{comment}
 
 \section{Old Analysis}
 \textbf{Note:} The following analysis is mostly the same as in \cite{Avin2015}.	
@@ -575,8 +600,12 @@ First, assume $r$ triggered a sequence of real merge actions. We show that the l
 As the left hand side of the equality changes exactly by $p$, the inductive hypothesis holds.\nl
 Now assume that $r$ triggered a sequence of artificial merge actions (i.e., followed by a delete action) and let $c_1,c_2,...,c_g$ denote components that were merged to create component $c$ that was immediately deleted. Then, the right hand side of the lemma inequality changes by $\sum_{i=1}^g|c_i|\cdot\log|c_i|+|c|\cdot\log k\geq-\sum_{i=1}^g|c_i|\cdot\log k+|c|\cdot\log k=0$. As the left hand side of the lemma inequality is unaffected by artificial merge actions, the inductive hypothesis follows also in this case.\qed
 
+\end{comment}
+
+
 \section{Implementation Details}
 \label{implDetSection}
+
 
 \subsection{Algorithm Pseudocode}
 
@@ -639,6 +668,7 @@ Now assume that $r$ triggered a sequence of artificial merge actions (i.e., foll
 	\end{algorithmic}
 \end{algorithm}
 
+
 \subsection{Algorithm Explanations}
 \begin{itemize}
 	\item \cref{insertAndUpdate} calls the other routines as needed
@@ -647,16 +677,12 @@ Now assume that $r$ triggered a sequence of artificial merge actions (i.e., foll
 	\item this deletion is performed by \cref{delComponents}
 \end{itemize}
 
+
 \section{Evaluation}
 % figures for the evaluation
 
 
-
-
-
-
 %TODO give sources for parmetis and metis performance and results
-%TODO include names of specific algorithms used
 %TODO add reference to algorithm description overview
 For this evaluation we compare our implementation described in \cref{implDetSection} to a static algorithm available via Metis (METIS\_PartGraphRecursive) and an adaptive/dynamic algorithm (ParMETIS\_V3\_AdaptiveRepart) implemented in the ParMetis framework. Both frameworks are known to produce very good results and to be very fast.\nl
 As input data we use several HPC traces, the nature of the data is described in more detail by Avin, Ghobadi, Griner and Schmid in \cite{Avin2019}.
