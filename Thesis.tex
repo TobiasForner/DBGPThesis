@@ -423,8 +423,55 @@ Finally we summarize our results in the following lemma.
 	With augmentation $2+\epsilon$, \crep{} pays at most total cost\nl $2\cdot\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma)$.
 \end{lemma}
 %TODO make this proof more understandable by starting with a more genral statement and plugging in the previous lemmas
-\textit{Proof.} The lemma follows by summing the results from \cref{crep_req_bound} and \cref{crep_mig_bound}. %Note that the communication costs from \cref{core_comm_upper} are bounded by $\sum_{C\in\del{}(\sigma)}|C|\cdot k\cdot\alpha$. Similarly we can bound the migration costs due to components from $\finalComps$ by $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha$. Accounting for the requests in $\halo(C)$ for a deleted component $C$ and weight of the edges that are present at the end of the execution of \crep{} leads to the lemma.\qed
+\textit{Proof.} The lemma follows by summing the results from \cref{crep_req_bound} and \cref{crep_mig_bound}. 
 
+\subsection{Lower Bound on \opt{}}
+\begin{lemma}
+	\label{opt_lower_bound}
+	The cost of the solution of \opt{} given input sequence $\sigma$ is bounded by
+	\begin{align*}
+	\opt{}(\sigma)\geq1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k +|P|.
+	\end{align*}
+	where $P$ denotes the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for.
+\end{lemma}
+
+\textit{Proof.} First we define the term \textit{offline interval} of a node $v$ to be the time between two migrations of $v$ in the solution of \opt{}. More specifically an offline interval of node $v$ either starts at time zero (if it is the first offline interval of $v$) or after a migration of $v$ and ends with the next migration of node $v$ that \opt{} performs.
+
+Furthermore we say that an offline interval is contained in the epoch $\epoch(C)$ of a component $C\in\del{}(\sigma)$ if it ends before the time $\tau(C)$. Note that $\tau(C)$ is both the time of the creation of $C$ in the solution of \crep{} as well as the time of its deletion as $C\in\del{}(\sigma)$.
+
+We assign a request $r$ involving the node $v$ to an offline interval of $v$ if it is both the first offline interval of one of the end points of $r$ that ends and if the offline interval ends before the deletion of the edge representing $r$ due to a component deletion.
+
+The requests that are not assigned to any offline interval are then those which are deleted due to the deletion of a component and those that are present at the end of the execution of \crep{}. For the sake of showing the lower bound from the lemma we choose to ignore the latter.
+
+We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from\nl $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ which \crep{} pays for but \opt{} does not. We denote the requests in question, i.e. those from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ which \opt{} does not pay for by $N$.
+As we only examine the amount of such edges assigned to one offline interval we observe that none of the nodes involved in the assigned requests are moved by \opt{} during the offline interval, hence all the requests in question involve only nodes that \opt{} has placed on the same server as $v$ during the offline interval. The number of such nodes is hence limited by the server capacity $k$. As we only examine requests from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ we know that none of these requests have led \crep{} to perform any merges, hence there were at most $\alpha$ requests between $v$ and any one of the other nodes on its server. This bounds the number of requests assigned to the online interval by $k\cdot\alpha$.
+Let $I$ denote the set of requests we have assigned to offline intervals in this way.
+
+For the following part of the proof we fix an arbitrary component $C\in\del{}(\sigma)$. Let $R$ denote the set of requests from $\halo(C)$ that were not assigned to any offline interval. This means that the nodes involved in requests from $R$ were not moved during the processing of requests from $R$ until the time of deletion of $C$.
+
+The number of nodes contained in $C$ or connected to $C$ via edges representing requests from $R$ is at least $|C|+R/\alpha$ since requests from $R$ have not led \crep{} to perform any migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R/\alpha}{k}$ different servers. As \opt{} does not pay for any requests from $R$ it follows that \opt{} must have placed the nodes from $C$ in $\frac{|C|+R/\alpha}{k}$ different servers.
+
+We first examine the case in which \opt{} does not move any nodes from $C$ during $\epoch(C)$. In this case \opt{} must partition a graph containing the nodes from $C$ which are connected via edges representing the requests from $\core(C)$into migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R/\alpha}{k}$ parts. As \crep{} merged component $C$ this graph is $\alpha$-connected and hence \cref{cut_lemma} gives that \opt{} has to cut at least edges of total weight migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R/k$.
+
+For the more general case in which \opt{} may perform node migrations during $\epoch(C)$ we adapt the graph construction from above as follows: we add a vertex representing each (node, time) pair from $\epoch(C)$.
+We connect each (node, time) pair $p$ with edges of weight $\alpha$ to the pairs of the same node that represent the time step directly before and directly after $p$ (if they exist in the graph). These edges represent the fact that \opt{} may choose to migrate a node between any two time steps in $\epoch(C)$.
+Additionally we add an edge of weight one for each request $r=\{u,v\}$ from $\core(C)$ by connecting the nodes in the graph that represent the pairs $(u,t)$ and $(v,t)$, respectively. \opt{} once again has to partition this graph into $\frac{|C|+R/\alpha}{k}$ parts.
+
+Note that we only added edges of weight $\alpha$ to the graph and hence this graph is also $\alpha$-connected. We conclude that once again \opt{} has to cut edges of weight at least $\frac{|C|+R/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R/k$.
+
+Finally we need to account for the fact that the migrations of nodes from $C$ that \opt{} performs also end offline intervals and might hence be accounted for twice in our analysis up to this point:
+\begin{align*}
+2\cdot\opt(\sigma)\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+R(C)/k+I/k\cdot\alpha=\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k
+\end{align*}
+where the last equality follows from the fact that 
+%TODO think about whether this is actually true, likely P is missing here 
+$\bigcup_{C\in\del(\sigma)}R(C)\cup I=\bigcup_{C\in\del(\sigma)}halo(C)$ as the different $R(C)$ as well as $I$ are disjoint.
+Hence the cost of \opt{} is at least $1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k+|P|$ as \opt{} pays for requests from $P$ by the definition of $P$.
+
+
+
+\begin{comment}
+	
 
 \subsection{Lower Bound on \opt{}}
 We split the analysis of the cost \opt{} has to pay into two parts. First we examine the cost incurred to \opt{} due to requests that led \crep{} to create (and delete) a component $C\in\del{}(\sigma)$, i.e. those from $\core(C)$. Then we provide a lower bound on the cost incurred to \opt{} due to requests from $\halo(C)$ for $C\in\del{}(\sigma)$.
@@ -450,11 +497,11 @@ We now bound the number of requests from $H$ \opt{} may be able to serve without
 We obtain the final lower bound on the cost of \opt{} by combining the results of the previous two lemmas. Note that migrations may allow \opt{} to both reduce the cost associated with $\core(C)$ and those from $\halo(B)$ for $B,C\in\del(\sigma)$. Hence we only account half of the cost of \opt{} and conclude our analysis on the lower bound on \opt{} with the following lemma.
 
 \begin{lemma}
-	\label{opt_lower_bound}
+	%\label{opt_lower_bound}
 	$\opt{}(\sigma)\geq1/2\sum_{C\in\del{}(\sigma)}(\lceil\frac{|C|}{k}\rceil\cdot\alpha/2+|\halo(C)|/k)$.
 \end{lemma}
-%TODO reformulate, maybe move explanation from above here
 \textit{Proof.} The proof follows from the two previous lemmas and the thoughts on these.
+\end{comment}
 
 \subsection{Competitive Ratio}
 In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_lower_bound} to obtain the following theorem.
@@ -464,10 +511,10 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 	With augmentation $(2+\epsilon)$ the competitive ratio of \crep{} is in $O(k \log k)$.
 \end{theo}
 
-\textit{Proof.} We arbitrarily fix an input sequence $\sigma$ and use our previous results to bound the competitive ratio of \crep{}. We define $\comps(\sigma):=\del{}(\sigma)\cup\finalComps(\sigma)$ in order to improve readability.
+\textit{Proof.} We arbitrarily fix an input sequence $\sigma$ and use our previous results to bound the competitive ratio of \crep{}. We define $\comps(\sigma):=\del{}(\sigma)\cup\finalComps(\sigma)$ in order to improve readability. Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for.
 
 \begin{align*}
-\frac{\crep{}(\sigma)}{\opt(\sigma)} &\leq\frac{2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma)}{1/2\sum_{C\in\del{}(\sigma)}(\lceil\frac{|C|}{k}\rceil\cdot\alpha/2+|\halo(C)|/k)}\\
+\frac{\crep{}(\sigma)}{\opt(\sigma)} &\leq\frac{2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma)}{1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k +|P|}\\
 &\leq k \log k\frac{2\cdot\sum_{C\in\del(\sigma)}|C|\cdot(2/\epsilon+1) \cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|}{1/2\sum_{(C\in\del{}(\sigma)}|C|\cdot\alpha/2+|\halo(C)|)}+\beta\\
 & = O(k \log k) +\beta
 \end{align*}
@@ -476,157 +523,6 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 
 To obtain the bound on $\beta$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta\leq l\cdot k \cdot
 ((2/\epsilon+1)+log k)\cdot\alpha+k\cdot l\cdot \alpha\in O(k \log k)$.\qed
-
-
-\begin{comment}
-
-\section{Old Analysis}
-\textbf{Note:} The following analysis is mostly the same as in \cite{Avin2015}.	
-
-	\subsection{Lower Bound on \opt{}}
-	\begin{defi}
-		Define the time of creation of a component $c$ managed by \crep{} as $\tau(c)$. For a non-singleton component c it is the time at which other components were merged resulting in c, if c is a singleton component $\tau(c)$ is 0 if c existed at time 0 and the last time a component containing c was deleted otherwise.
-	\end{defi}
-	\begin{defi}
-		%TODO possibly add explanation of this definition
-		For a non-singleton component $c$, define
-	\end{defi}
-	\begin{align*}
-	F(c)=\biguplus_{b\in S(c)}\times \{\tau(b)+1,...,\tau(c)\}.
-	\end{align*}
-	
-	\begin{defi}
-		A communication request between nodes x and y at time $t$ is \textit{contained} in $F(C)$ if $(x,y)\in F(c)$ and $(y,t)\in F(c)$.
-	\end{defi}
-
-	\begin{defi}
-		A migration of node x performed by OPT at time t is \textit{contained} in $F(C)$ if $(x,t)\in F(c)$
-	\end{defi}
-
-	\begin{defi}
-		For any component c, define $\opt{}(c)$ as the cost incurred by \opt{} due to requests contained in $F(c)$ plus the cost due to migrations contained in $F(c)$.
-	\end{defi}
-
-	\begin{defi}
-		Define $Y_c$ as the set of clusters containing nodes of $c$ in the solution of \opt{} after \opt{} performs its migrations (if any) at time $\tau(c)$.
-	\end{defi}
-	Then the total cost of \opt{} can be lower-bounded: $\opt(\sigma)\leq\sum_c \opt(c)$.\nl\nl	
-	
-	%TODO remove this later
-	\textbf{Note:} The following lemma is a changed from lemma 5 in \cite{Avin2015} in order to account for the fact that the connectivity-based approach only guarantees at least weight $|B|\cdot\alpha/2$ between different bundles whereas the \crep{}-density approach from \cite{Avin2015} guarantees a higher edge weight of $(|B|-1)\cdot\alpha$.
-
-	\begin{lemma}
-		\label{lem11}
-		For any non-trivial component $c$, it holds that $\opt(c)\geq1/2\cdot|Y_c|\cdot\alpha-\sum_{b\in S(c)}(|Y_b|-1)\cdot\alpha)$.
-	\end{lemma}
-	%TODO make sure that lemma statement is enough for the analysis
-
-	\textit{Proof.} Fix a component $b\in S(c)$ and any node $x\in b$. Let \optmig(x) be the number of \opt migrations of node x at times $t\in\{\tau(b)+1,...,\tau(c)\}$. Furthermore, let $Y'_x$ be the set of clusters that contained x at some moment in time $t\in\{\tau(b)+1,...,\tau(c)\}$ (in the solution of \opt). We extend these notions to components: $\optmig{}(b):=\sum_{x\in b}\optmig(x)$ and $Y_{b'}:=\bigcup_{x\in b}Y'_x$. Observe that $|Y_b'|\leq|Y_b|+\optmig(b)$.\nl
-	Now aggregate components of $S(c)$ into component-sets called \textit{bundles}, so that any two bundles always have their nodes in disjoint clusters. To achieve this, we construct a hypergraph, whose nodes correspond to clusters from $\cup_{b\in S(s)}Y'_b$. Each component $b\in S(c)$ defines a hyperedge that connects all nodes (clusters) that are in $Y'_b$. Now we examine the connected components of this hypergraph which we call  \textit{hypergraph parts} from now on.
-	We bound the number of hypergraph parts by using the fact that the hyperedge related to component $b$ connects $|Y'_b|$ nodes:
-	\begin{align*}
-		B&\geq|\bigcup_{b\in S(s)}Y'_b|-\sum_{b\in S(c)}(|Y'_b|-1)\\
-		&\geq|Y_c|-\sum_{b\in S(c)}(|Y_b|-1)-\sum_{b\in S(c)}\optmig(b).
-	\end{align*}
-	Due to \cref{cut_lemma} the number of communication requests in $F(c)$ that are between different bundles is at least $|B|\cdot\alpha/2$. Each of these requests is by definition paid by \opt as each request involves a communication between nodes which \opt stored in different clusters.
-	\opt(c) also involves $\sum_{b\in S(c)}\optmig(b)$ node migrations in $F(c)$.\nl
-	Therefore $2\opt{}(c)\geq|B|\cdot\alpha+\sum_{b\in S(c)}\optmig(b)\cdot\alpha\geq|Y_c|\cdot\alpha-\sum_{b\in S(c)}(|Y_b|-1)\cdot\alpha$ and hence also
-	$\opt(c)\geq1/2\cdot(|Y_c|\cdot\alpha-\sum_{b\in S(c)}(|Y_b|-1)\cdot\alpha)$.\nl
-
-\textbf{Note:} This lemma does not work like lemma 6 in \cite{Avin2015} as there is no obvious telescope sum.
-	\begin{lemma}
-		For any input $\sigma$, let $\del(\sigma)$ be the set of components that were eventually deleted by \crep{}. Then $\opt(\sigma)\geq\sum_{c\in\del(\sigma)}|c|/(2k)\cdot\alpha$.
-	\end{lemma}
-	%TODO check whether lemma needs to be rephrased, e.g. if previous lemma cant be used to achieve this statement
-	\textit{Proof.} Fix any component $c\in\del(\sigma)$. Consider a tree $T(c)$ which describes how component $c$ was created: the leaves of $T(c)$ are singleton components containing nodes of c, the root is c itself, and each internal node corresponds to a component created at a single time by merging its children.
-	We now sum \opt(b) over all components $b$ from T(c), including the root $c$ and the leaves L(T(c)).
-	The lower bound given by \cref{lem11} does not sum telescopically:
-	%TODO rephrase previous lemma to make this work, possibly non-integer values by dividing by 2
-	%\begin{align*}
-	%	\sum_{b\in T(c)}\opt{}(b)&\geq
-	%\end{align*}
-
-
-	\subsection{Upper Bound on \crep{}}
-	Fix any input $\sigma$ of \crep{} and define the following notions.
-	\begin{defi}
-		Let $M(\sigma)$ be the sequence of merge actions (real and artificial ones) performed by \crep{}. For any real merge action $m\in M(\sigma)$, let \size(m) denote the size of the smaller component that was merged. For an artificial merge action set \size(m)=0.
-	\end{defi}
-
-\begin{defi}
-	Let \final($\sigma$) be the set of all components that exist when \crep{} finishes sequence $\sigma$. Note that $w(\final(\sigma))$ is the total weight of all edges after processing $\sigma$.
-\end{defi}
-
-We split \crep{}($\sigma$) into two parts: the cost of serving requests, \crep{}$^{req}(\sigma)$, and the cost of node migrations, \crep{}$^{mig}(\sigma)$.\nl
-
-
-\textbf{Note:} This lemma was adapted from lemma 7 in \cite{Avin2015} and changed to only give an upper bound instead of an equality as alpha-connectivity only gives upper and lower bounds and that is all that is needed for the analysis.
-\begin{lemma}
-	For any input $\sigma$, \crep{}$^{req}(\sigma)\leq|M(\sigma)|\cdot\alpha+w(\final(\sigma))$.
-\end{lemma}
-\textit{Proof.} The lemma follows by an induction on all requests of $\sigma$. Whenever \crep{} pays for the communication request, the corresponding edge weight is incremented and both sides increase by 1.
-At a time when $s$ components are merged, $s-1$ merge actions are executed, and due to \cref{cut_lemma_upper} the total edge weight decreases by at most $(s-1)\cdot\alpha$.
-
-
-\textbf{Note:} This lemma and its proof do not use connectivity or \crep{}-density at all as they only rely on the general migration behaviour and hence is exactly the same as lemma 8 in \cite{Avin2015}.
-\begin{lemma}
-	For any input $\sigma$, with $(2+\epsilon)$-augmentation, \crep{}$^{mig}(\sigma)\leq(1+4/\epsilon)\cdot\alpha\cdot\sum_{m\in M(\sigma)}\size(m)$.
-\end{lemma}
-
-\textit{Proof.} If \crep{} has more than $2k$ nodes in cluster $V_i$ (for $i\in\{1,...,l\}$), then we call this excess \textit{overflow} of $V_i$, otherwise, the overflow of $V_i$ is zero. We denote the overflow of cluster $V_i$ measured right after processing sequence $\sigma$ by OVR$^\sigma(V_i)$. It suffices to show the following relation for any sequence $\sigma$:
-
-\begin{align}
-\text{\crep{}}^{mig}(\sigma)+\displaystyle\sum_{j=1}^l(4/\epsilon)\cdot\alpha\cdot\ovr^\sigma(V_j)\leq(1+4/\epsilon)\cdot\alpha\cdot\sum_{m\in M(\sigma)}\size(m).\label{eq1}
-\end{align}
-As the second summand of \ref{eq1} is always non-negative, \ref{eq1} will imply the lemma.
-The proof will follow by an induction on all requests in $\sigma$. Clearly, \ref{eq1} holds trivially at the beginning, as there are no overflows, and thus both sides of \ref{eq1} are zero.
-Assume that \ref{eq1} holds fo a sequence $\sigma$ and we show it for sequence $\sigma\cup\{r\}$, where $r$ is some request.
-We may focus on a request $r$ that triggers component(s) migration as otherwise \ref{eq1} holds trivially.
-
-Such a migration is triggered by a real merge action $m$ of two components $c_x$ and $c_y$. We assume that $|c_x|\leq|c_y|$, and hence $\size(m)=|c_x|$. Note that $|c_x|+|c_y|\leq k$, as otherwise the resulting component would be deleted and no migration would be performed.
-
-Let $V_x$ and $V_y$ denote the cluster that held components $c_x$ and $c_y$, respectively, and $V_z$ be the destination cluster for $c_x$ and $c_y$ ($z=y$ is possible). For any cluster $V$, we denote the change in its overflow by $\Delta\ovr(V)=\ovr^{\sigma\cup\{r\}}(V)-\ovr{}^{\sigma}(V)$. It suffices to show that the change of the left hand side of \ref{eq1} is at most the increase of its right hand side, i.e.:
-\begin{align}
-\text{\crep{}}^{mig}(r)+\displaystyle\sum_{V\in\{V_x, V_y, V_z\}}(4/\epsilon)\cdot\alpha\cdot\Delta\ovr{}(V)\leq(1+4/\epsilon)\cdot|c_x|\cdot\alpha.\label{eq2}
-\end{align}
-
-In order to show that \ref{eq2} holds, consider three cases:
-
-\begin{tabularx}{\textwidth}{cC}
-	1. &$V_y$ had at least $|c_x|$ empty slots. In this case, \crep{} simply migrates $c_x$ to $V_y$ and pays $|c_x|\cdot\alpha$. Then, $\Delta\ovr{}(V_x)\leq0. \Delta\ovr{}(V_y)\leq|c_x|, V_z=V_y$, and thus \ref{eq2} follows.\\
-	
-	2. &$V_y$ had less than $|c_x|$ empty slots and $|c_y|\leq(2/\epsilon)\cdot|c_x|$. \crep{} migrates both $c_x$ and $c_y$ to component $V_z$ and the incurred cost is \crep{}$^{mig}(r)=(|c_x|+|c_y|)\cdot\alpha\leq(1+2/\epsilon)\cdot|c_x|\cdot\alpha<(1+4/\epsilon)\cdot|c_x|\cdot\alpha$. It remains to show that the second summand of \ref{eq2} is at most 0. Clearly, $\Delta\ovr{}(V_x)\leq0$ and $\Delta\ovr{}(V_y)\leq0$. Furthermore, the number of nodes in $V_z$ was at most $k$ before the migration by the definition of \crep{}, and thus is at most $k+|c_x|+|c_y|\leq 2k$ after the migration. This implies that $\Delta\ovr{}(V_z)=0-0=0$.\\
-	3. &$V_y$ had less than $|c_x|$ empty slots and $|c_y|>(2/\epsilon)\cdot|c_x|$. As in the previous case, \crep{} migrates $c_x$ and $c_y$ to component $V_z$, paying \crep{}$^{mig}(r)=(|c_x|+|c_y|)\cdot\alpha<2\cdot|c_y|\cdot\alpha$. This time, \crep{}$^{mig}(r)$ can be much larger than the right hand side of \ref{eq2}, and thus we will resort to showing that the second summand of \ref{eq2} is at most $-2\cdot|c_y|\cdot\alpha$.\\
-	
-	&As in the previous case, $\Delta\ovr{}(V_x)\leq0$ and $\Delta\ovr{}(V_z)=0$. Observe that $|c_x|<(\epsilon/2)\cdot|c_y|\leq(\epsilon/2)\cdot k$. As the migration of $|c_x|$ to $V_y$ was not possible, the initial number of nodes in $V_y$ was greater than $(2+\epsilon)\cdot k-|c_x|\geq(2+\epsilon/2)\cdot k$, i.e., $\ovr{}^\sigma(V_y)\geq(\epsilon/2)\cdot |c_y|$. As component $c_y$ was migrated out of $V_y$, the number of overflow nodes in $V_y$ changes by
-	\begin{align*}
-	\Delta\ovr{}(V_y)=-\text{min}\{\ovr{}^\sigma(V_y), |c_y|\}\leq-(\epsilon/2)\cdot|c_y|.
-	\end{align*}
-	Therefore, the second summand of \ref{eq2} is at most $(4/\epsilon)\cdot\alpha\cdot\Delta\ovr{}(V_y)\leq-(4/\epsilon)\cdot\alpha\cdot(\epsilon/2)\cdot|c_y|=-2\cdot|c_y|\cdot\alpha|$ as desired. \\
-	\end{tabularx}\qed
-
-
-	
-\subsection{Competitive Ratio}
-
-\textbf{Note:} The following lemma is the same as lemma 9 in \cite{Avin2015}.
-\begin{lemma}
-	\label{size_lemma}
-	For any input $\sigma$, it holds that $\sum_{m\in M(\sigma)}\size{}(m)\leq\sum_{c\in\del(\sigma)}|c|\cdot \log k+\sum_{c\in\final(\sigma)}|c|\cdot\log|c|$, where all logarithms are binary.
-\end{lemma}
-\textit{Proof.} We prove the lemma by an induction on all requests of $\sigma$. At the very beginning, both sides of the lemma inequality are zero, and hence the induction basis holds trivially. We assume that the lemma inequality is preserved for a sequence $\sigma$ and we show it for sequence $\sigma\cup\{r\}$, where $r$ is an arbitrary request. We may assume $r$ triggered some merge actions as otherwise the claim follows trivially.\nl
-First, assume $r$ triggered a sequence of real merge actions. We show that the lemma inequality is preserved after processing each merge action. Let $c_x$ and $c_y$ be merged components with sizes $p=|c_x|$ and $q=|c_y|$, where $p\leq q$ without loss of generality. Due to such action, the right hand side of the lemma inequality increases by
-\begin{align*}	
-&\text{\quad}(p+q)\cdot\log(p+q)-p\cdot\log p-q\cdot\log q\\
-&=p\cdot(\log(p+q)-\log p)+q\cdot(\log(p+q)-\log q)\\
-&\geq p\cdot\log(p+q)/p\\
-&\geq p\cdot\log 2=p.
-\end{align*}
-
-As the left hand side of the equality changes exactly by $p$, the inductive hypothesis holds.\nl
-Now assume that $r$ triggered a sequence of artificial merge actions (i.e., followed by a delete action) and let $c_1,c_2,...,c_g$ denote components that were merged to create component $c$ that was immediately deleted. Then, the right hand side of the lemma inequality changes by $\sum_{i=1}^g|c_i|\cdot\log|c_i|+|c|\cdot\log k\geq-\sum_{i=1}^g|c_i|\cdot\log k+|c|\cdot\log k=0$. As the left hand side of the lemma inequality is unaffected by artificial merge actions, the inductive hypothesis follows also in this case.\qed
-
-\end{comment}
 
 
 \section{Implementation Details}
