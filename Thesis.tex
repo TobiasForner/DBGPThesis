@@ -139,6 +139,8 @@
 	
 	\section{Problem Definition}
 	
+	The Dynamic Balanced Graph Partitioning problem was first introduced by Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2015a}).
+	
 	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $k$ parts, each of size $l$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.
 	
 	More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.
@@ -157,8 +159,7 @@
 	
 	\section{Related Work}
 	\subsection{Dynamic Balanced RePartitioning}
-	%TODO adapt if current problems cant be resolved
-	Avin et al.\cite{Avin2015a} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is the topic of this thesis. We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. %While they gave a competitive algorithm, their approach could not be used for an actual implementation as they did not provide a polynomial-time implementation. In this thesis we will show an adaptation of their algorithm \crep{} which both preserves the initial competitive ratio and can also be performed in polynomial time.\nl
+	Avin et al.\cite{Avin2015a} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is the topic of this thesis. They propose a deterministic algorithm for the Dynamic Balanced Graph Partitioning problem with augmentation $2+\epsilon$ for any $\epsilon>1/k$. They also show a lower bound of $k-1$ for the competitive ratio of any online algorithm for the Dynamic Balanced Graph Partitioning problem on two clusters via a reduction to online paging. Furthermore they show that no $\delta$-augmented deterministic online algorithm can achieve a competitive ratio smaller than $k$ for any augmentation $\delta<l$. %We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. 
 	
 	\subsection{Restricted Variant of Balanced RePartitioning}
 	Restricted variants of the Balanced RePartitioning problem have also been studied. Here one assumes certain restrictions of the input sequence $\sigma$ and then studies online algorithms for these cases. 
@@ -167,7 +168,7 @@
 	
 	Henzinger, Neumann and Schmid (\cite{Henzinger2019}) studies a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.
 	
-	\cite{Henzinger2019} present an algorithm for the case where the number of servers is $l=2$ that achieves a competitive ratio of $O((\log n)/\epsilon)$ with augmentation $\epsilon$, i.e. each server has capacity $(1+\epsilon)n/2$ for $\epsilon\in(0,1)$.
+	The authors of \cite{Henzinger2019} present an algorithm for the case where the number of servers is $l=2$ that achieves a competitive ratio of $O((\log n)/\epsilon)$ with augmentation $\epsilon$, i.e. each server has capacity $(1+\epsilon)n/2$ for $\epsilon\in(0,1)$.
 	
 	For the general case of $l$ servers of capacity $(1+\epsilon)n/l$ the authors construct an exponential-time algorithm that achieves a competitive ratio of $O((l\log n \log l)/\epsilon)$ for $\epsilon\in(0,1/2)$ and also provide a distributed version.
 	Additionally the authors describe a polynomial-time $O((l^2\log n\log l)/\epsilon^2)$-competitive algorithm for the case with general $l$, servers of capacity $(1+\epsilon)n/l$ and $\epsilon\in(0,1/2)$.
@@ -361,14 +362,14 @@ Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a subs
 
 Then the incrementation of the weight of edge $e$ at time $t$ raised the connectivity of S, but S was not merged into a new $\alpha$-connected component C. if no new component was created at time $t$ then we arrive at a contradiction as \crep{} always merges if there exists a mergeable component set.
 
-Now assume that a component $C$ was created at time t. This means that $C$ must also contain the endpoints of $e$. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S.
+Now assume that a component $C$ was created at time t. This means that $C$ must also contain the endpoints of $e$. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S.\qed
 
 \begin{lemma}
 	\label{mergeable_lemma}
 	Fix any time t and consider weights right after they were updated by \crep{} but before any merge or delete actions. Then all subsets $S$ of components with $|S|>1$ have connectivity at most $\alpha$ and a mergeable component set S has connectivity exactly $\alpha$.
 \end{lemma}
 
-\textit{Proof.} This lemma follows directly from lemma 2 as connectivities can only increase by at most 1 at each time t.
+\textit{Proof.} This lemma follows directly from lemma 2 as connectivities can only increase by at most 1 at each time t.\qed
 
 \begin{lemma}
 	\label{cut_lemma}
@@ -379,7 +380,7 @@ Now assume that a component $C$ was created at time t. This means that $C$ must 
 \sum_{c\in S}deg_S(c)=2\sum_{e\in S}w(e)
 \end{align*}
 The equality follows as the left sum counts each edge twice, once for each endpoint.
-Now consider the fact that each component must have degree at least $\alpha$ with respect to the edges in S as S has connectivity $\alpha$ and hence the lemma follows.
+Now consider the fact that each component must have degree at least $\alpha$ with respect to the edges in S as S has connectivity $\alpha$ and hence the lemma follows.\qed
 %TODO rephrase like the lemma in the original analysis, with F(c)
 
 \begin{lemma}
@@ -387,7 +388,7 @@ Now consider the fact that each component must have degree at least $\alpha$ wit
 	\label{cut_lemma_upper}
 	The weight between the components of a component subset $S$ of connectivity $\alpha$ is at most $(|S|-1)\cdot\alpha$.
 \end{lemma}
-\textit{Proof.} We iteratively partition $S$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $S$ which partitions $S$ into the subsets $S_1$ and $S_2$ and iteratively partition the resulting sets until all sets contain only one component each. As this required at most $|S|-1$ cuts of value at most $\alpha$ the lemma follows.
+\textit{Proof.} We iteratively partition $S$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $S$ which partitions $S$ into the subsets $S_1$ and $S_2$ and iteratively partition the resulting sets until all sets contain only one component each. As this required at most $|S|-1$ cuts of value at most $\alpha$ the lemma follows.\qed
 
 \subsection{Upper Bound On \crep{}}
 
@@ -510,7 +511,7 @@ Finally we need to account for the fact that the migrations of nodes from $C$ th
 where the last equality follows from the fact that 
 %TODO think about whether this is actually true, likely P is missing here 
 $\bigcup_{C\in\del(\sigma)}R(C)\cup I\cup P\cup OP=\bigcup_{C\in\del(\sigma)}\halo(C)$ as the different $R(C)$ as well as $I, P$ and $OP$ are disjoint.
-Hence the cost of \opt{} is at least $1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k$ as \opt{} pays for requests from $P$ by the definition of $P$.
+Hence the cost of \opt{} is at least $1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k$ as \opt{} pays for requests from $P$ by the definition of $P$.\qed
 
 
 \subsection{Competitive Ratio}
