@@ -56,8 +56,6 @@
 
 %commands for input sequence diagrams
 \newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
-%\newcommand{\request}[3]{\addplot coordinates{(#3,#1) (#3,#2)};}
-%\newcommand{\request}[3]{\draw (#3,#1) -- (#3,#2);}
 
 \theoremstyle{definition}
 \newtheorem{defi}{Definition}
@@ -71,9 +69,10 @@
 
 %TODO find out journal or equivalent for some references
 
-%outer title page
+
 \begin{document}
 	
+	%title page
 	\input{title/title_page}	
 	
 	\thispagestyle{empty}
@@ -82,7 +81,6 @@
 	\end{abstract}
 	
 	\clearpage
-	\pagenumbering{arabic} 
 	%plots for evaluation data, decomp tree with regular alpha
 	% A - cesar mocfe
 	% B - cesar nekbone First300k
@@ -130,14 +128,17 @@
 {
 	\hypersetup{linkcolor=black}
 	\tableofcontents
+	\thispagestyle{empty}
 	\clearpage
 }
+\pagenumbering{arabic} 
 
 
-\section{Introduction}
+	\section{Introduction}
 	
 	
 	\section{Problem Definition}
+	
 	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $k$ parts, each of size $l$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.
 	
 	More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.
@@ -157,18 +158,70 @@
 	\section{Related Work}
 	\subsection{Dynamic Balanced RePartitioning}
 	%TODO adapt if current problems cant be resolved
-	Avin et al.\cite{Avin2015a} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is at the core of this also the topic of this thesis. We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. %While they gave a competitive algorithm, their approach could not be used for an actual implementation as they did not provide a polynomial-time implementation. In this thesis we will show an adaptation of their algorithm \crep{} which both preserves the initial competitive ratio and can also be performed in polynomial time.\nl
+	Avin et al.\cite{Avin2015a} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is the topic of this thesis. We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. %While they gave a competitive algorithm, their approach could not be used for an actual implementation as they did not provide a polynomial-time implementation. In this thesis we will show an adaptation of their algorithm \crep{} which both preserves the initial competitive ratio and can also be performed in polynomial time.\nl
 	
-	\subsection{Learning Variant of BRP}
-	%TODO also have a look at Competitive clustering of stochastic communication patterns on a ring
-	\cite{Henzinger2019} studies a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.
+	\subsection{Restricted Variant of Balanced RePartitioning}
+	Restricted variants of the Balanced RePartitioning problem have also been studied. Here one assumes certain restrictions of the input sequence $\sigma$ and then studies online algorithms for these cases. 
+	
+	Avin, Cohen, Parham and Schmid (\cite{Avin2018}) study one such case: the authors assume that an adversary provides requests according to a fixed distribution of which the optimal algorithm \opt{} has knowledge while an online algorithm that is compared with \opt{} has not. Further they restrict the communication pattern to form a ring-like pattern, i.e. for the case of $n$ nodes $0,...,n-1$ only requests $r$ of the form $r=\{i \mod n, (i+1)\mod n\}$ are allowed. For this case they present a competitive online algorithm which achieves a competitive ratio of $O(\log n)$ with high probability.	
+	
+	Henzinger, Neumann and Schmid (\cite{Henzinger2019}) studies a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.
 	
 	\cite{Henzinger2019} present an algorithm for the case where the number of servers is $l=2$ that achieves a competitive ratio of $O((\log n)/\epsilon)$ with augmentation $\epsilon$, i.e. each server has capacity $(1+\epsilon)n/2$ for $\epsilon\in(0,1)$.
 	
-	For the general case of $l$ servers of capacity $(1+\epsilon)n/2$ the authors construct an exponential-time algorithm that achieves a competitive ratio of $\O((l\log n \log l)/\epsilon)$ for $\epsilon\in(0,1/2)$ and also provide a distributed version.
+	For the general case of $l$ servers of capacity $(1+\epsilon)n/l$ the authors construct an exponential-time algorithm that achieves a competitive ratio of $O((l\log n \log l)/\epsilon)$ for $\epsilon\in(0,1/2)$ and also provide a distributed version.
 	Additionally the authors describe a polynomial-time $O((l^2\log n\log l)/\epsilon^2)$-competitive algorithm for the case with general $l$, servers of capacity $(1+\epsilon)n/l$ and $\epsilon\in(0,1/2)$.
 	
 	It is important to stress that the assumption that the requests reveal a perfect partitioning of the communication nodes is not applicable for most practical applications and thus it is important to study the general BRP problem without restricting $\sigma$.
+	
+	\section{Algorithmic Ideas}
+	In this section we describe different solution approaches to the Dynamic Balanced Graph Partitioning problem. Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
+	We first describe this general approach that is common to both algorithms and then address the specific differences and analysis ideas.
+	
+	More formally, initially each node forms a singleton component, but as the input sequence $\sigma$ is revealed to the algorithms new communication patterns unfold. The algorithm keeps track of these patterns by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of communication requests between nodes that were part of different components at the time of the request, i.e. for edge $e=\{u,v\}$, $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is \textit{paid} if the nodes are located o different servers at the time of the request.
+	
+	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfills this requirement.
+	
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\epsilon\cdot|C|,k\}$, otherwise the reservation is zero. 
+	
+	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms.
+	
+	\subsection{CORE-DEL}
+	
+	%TODO maybe write more about connectivity vs density
+	 The first one resets edges which are \textit{contained} in the deleted component, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ and $v$ were contained in component $C$ at the time of its deletion. This approach resembles the one suggested by Avin et al. (\cite{Avin2015a}).
+	 
+	 \subsection{ADJ-DEL}
+	
+	The second algorithm resets all the edges contained in the deleted component $C$ but also resets the weights of edges \textit{adjacent} to $C$, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ or $v$ were contained in component $C$ at the time of its deletion. This second version is very similar to the algorithm proposed by Avin et al. in \cite{Avin2015}.
+	
+	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node in not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to. We have also included a pseudocode description of this general outline of the algorithms in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms.
+	
+	%TODO include reservation in algorithm description
+	\begin{algorithm}
+		\caption{DynamicDecomp}
+		\label{highLevelAlg}
+		\begin{algorithmic}
+			\STATE Initialize an empty graph on n nodes
+			\STATE turn each of the n nodes into a singleton component
+			\FORALL{$r=\{u,v\}\in\sigma$}
+			
+			\IF{$comp(v)\neq comp(u)$}
+			\STATE $w(\{u,v\})\gets w(\{u,v\})+1$
+			\ENDIF
+			\IF{$\exists$ component set $X$ with connectivity at least $\alpha$ and $|X|>1$ and $nodes(X)\leq k$}
+			\STATE merge(X)
+			\ENDIF
+			\IF{$\exists$ component set $Y$ with connectivity at least $\alpha$ and $nodes(Y)> k$}
+			\STATE delete(Y)
+			\ENDIF	
+			
+			\ENDFOR
+			
+		\end{algorithmic}
+	\end{algorithm}
+	
+	The idea for the analysis of both approaches is to account cost to \opt{} for each component $C$ that is deleted by one of the algorithms.
 	
 	
 	\section{Problems With Analysis in Previous Work}
@@ -265,42 +318,7 @@
 	\subsection{Overview}
 	The algorithm maintains a second-order partitioning of the nodes into \textit{communication components} which are sets of nodes that communicated frequently. As more requests from the input sequence $\sigma$ are revealed to the algorithm the components grow in size until the algorithm discovers a component that is too large and hence decides to delete it.
 	
-	More formally, initially each node forms a singleton component, but as the algorithm the input sequence $\sigma$ is revealed to \crep{} new communication patterns unfold which the algorithm keeps track of by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of communication requests between nodes that were part of different components at the time of the request, i.e. for edge $e=\{u,v\}$ $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is \textit{paid} if the nodes are located o different servers at the time of the request.
 	
-	\crep{} merges a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfills this requirement.
-	
-	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\epsilon\cdot|C|,k\}$. 
-	
-	If the subset has cardinality greater than $k$ the resulting component is split into singleton components and all edges $e=\{u,v\}$ are reset to zero if $u$ or $v$ were contained in component $C$ at the time of its deletion.
-	
-	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node in not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$. We have also included a pseudocode description of the algorithm in \cref{highLevelAlg}.\nl\nl
-	
-	%TODO include reservation in algorithm description
-	\begin{algorithm}
-		\caption{DynamicDecomp}
-		\label{highLevelAlg}
-		\begin{algorithmic}
-			\STATE Initialize an empty graph on n nodes
-			\STATE turn each of the n nodes into a singleton component
-			\FORALL{$r=\{u,v\}\in\sigma$}
-			
-			\IF{$comp(v)\neq comp(u)$}
-			\STATE $w(\{u,v\})\gets w(\{u,v\})+1$
-			\ENDIF
-			\IF{$\exists$ component set $X$ with connectivity at least $\alpha$ and $|X|>1$ and $nodes(X)\leq k$}
-			\STATE merge(X)
-			\ENDIF
-			\IF{$\exists$ component set $Y$ with connectivity at least $\alpha$ and $nodes(Y)> k$}
-			\STATE delete(Y)
-			\ENDIF	
-			
-			\ENDFOR
-					
-		\end{algorithmic}
-	\end{algorithm}
-	
-	
-%TODO define set of components that is merged at time t
 
 \section{Analysis}
 We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(k\log k)$-competitive.
