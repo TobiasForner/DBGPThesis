@@ -158,6 +158,7 @@
 	Often we allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\times n/k$ nodes to each server where $\delta>1$. This augmented online algorithm is than compared with the optimal offline algorithm \opt{} which is not allowed to use any augmentation.
 	
 	\section{Related Work}
+	%TODO write introduction: importance of the field due to increasing network loads
 	\subsection{Dynamic Balanced RePartitioning}
 	Avin et al.\cite{Avin2015a} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is the topic of this thesis. They propose a deterministic algorithm for the Dynamic Balanced Graph Partitioning problem with augmentation $2+\epsilon$ for any $\epsilon>1/k$. They also show a lower bound of $k-1$ for the competitive ratio of any online algorithm for the Dynamic Balanced Graph Partitioning problem on two clusters via a reduction to online paging. Furthermore they show that no $\delta$-augmented deterministic online algorithm can achieve a competitive ratio smaller than $k$ for any augmentation $\delta<l$. %We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. 
 	
@@ -174,6 +175,12 @@
 	Additionally the authors describe a polynomial-time $O((l^2\log n\log l)/\epsilon^2)$-competitive algorithm for the case with general $l$, servers of capacity $(1+\epsilon)n/l$ and $\epsilon\in(0,1/2)$.
 	
 	It is important to stress that the assumption that the requests reveal a perfect partitioning of the communication nodes is not applicable for most practical applications and thus it is important to study the general BRP problem without restricting $\sigma$.
+	
+	\subsection{Clustering}
+	
+	\subsection{Online Paging}
+	
+	\subsection{Static Graph Partitioning}
 	
 	\section{Algorithmic Ideas}
 	In this section we describe different solution approaches to the Dynamic Balanced Graph Partitioning problem. Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
@@ -612,17 +619,15 @@ To obtain the bound on $\beta$ we observe that the components in $\finalComps(\s
 
 
 \section{Evaluation}
-% figures for the evaluation
+In this section we evaluate the quality and performance of our algorithm implementation.
 
 
-%TODO give sources for parmetis and metis performance and results
-%TODO add reference to algorithm description overview
-For this evaluation we compare our implementation described in \cref{implDetSection} to a static algorithm available via Metis (METIS\_PartGraphRecursive) and an adaptive/dynamic algorithm (ParMETIS\_V3\_AdaptiveRepart) implemented in the ParMetis framework. Both frameworks are known to produce very good results and to be very fast.\nl
+For this evaluation we compare our implementation described in \cref{implDetSection} to a static algorithm available via Metis (METIS\_PartGraphRecursive) (\cite{Karypis1998, Karypis1998a}) and an adaptive/dynamic algorithm (ParMETIS\_V3\_AdaptiveRepart)(\cite{Karypis1999, Schloegel1997, Schloegel2000}) implemented in the ParMetis framework. Both frameworks are known to produce very good results and to be very fast.\nl
 As input data we use several HPC traces, the nature of the data is described in more detail by Avin, Ghobadi, Griner and Schmid in \cite{Avin2019}.
 
 All data sets contain 1024 different communication nodes and are limited to the first 300 000 requests. The value of $\alpha$ is set to be 6 and the algorithm was tasked to partition the nodes into 32 clusters of size 32 each. The dynamic algorithms were allowed to use augmentation with a factor of $2.1$, i.e. for the dynamic algorithms the maximum cluster capacities were $\lfloor32\cdot2.1\rfloor=67$.\nl
 %TODO investigate capacity usage of static algorithm
-To our knowledge it is not possible to specify hard limits for the capacities used by the static algorithm implemented in Metis and as a result there are some occurences where the algorithm exceeds the capacities that are allowed by a small amount.\nl\nl
+To our knowledge it is not possible to specify hard limits for the capacities used by the static algorithm implemented in Metis and as a result there are some occurrences where the algorithm exceeds the capacities that are allowed by a small amount.\nl
 
 \begin{figure}
 	\begin{tikzpicture}
