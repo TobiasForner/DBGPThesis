@@ -182,9 +182,14 @@
 	
 	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfills this requirement.
 	
-	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\epsilon\cdot|C|,k\}$, otherwise the reservation is zero. 
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\epsilon\cdot|C|,k\}$, otherwise the reservation is zero.
 	
-	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms.
+	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to 
+	
+	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. We also describe the particular challenges each approch entails when it comes to the competitive analysis.
+	
+	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2015a}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
+	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are lemma 4.3 in \cite{Avin2015a}, property 3 in \cite{Avin2015} and \cref{cut_lemma}.
 	
 	\subsection{CORE-DEL}
 	
@@ -195,7 +200,7 @@
 	
 	The second algorithm resets all the edges contained in the deleted component $C$ but also resets the weights of edges \textit{adjacent} to $C$, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ or $v$ were contained in component $C$ at the time of its deletion. This second version is very similar to the algorithm proposed by Avin et al. in \cite{Avin2015}.
 	
-	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node in not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to. We have also included a pseudocode description of this general outline of the algorithms in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms.
+	%We have also included a pseudocode description of this general outline of the algorithms in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms.
 	
 	%TODO include reservation in algorithm description
 	\begin{algorithm}
@@ -444,26 +449,37 @@ Finally we summarize our results in the following lemma.
 \textit{Proof.} The lemma follows by summing the results from \cref{crep_req_bound} and \cref{crep_mig_bound}. 
 
 \subsection{Lower Bound on \opt{}}
+First we define the term \textit{offline interval} of a node $v$ to be the time between two migrations of $v$ in the solution of \opt{}. More specifically an offline interval of node $v$ either starts at time zero (if it is the first offline interval of $v$) or after a migration of $v$ and ends with the next migration of node $v$ that \opt{} performs.
+
+Furthermore we say that an offline interval is contained in the epoch $\epoch(C)$ of a component $C\in\del{}(\sigma)$ if it ends before the time $\tau(C)$. Note that $\tau(C)$ is both the time of the creation of $C$ in the solution of \crep{} and the time of its deletion as $C\in\del{}(\sigma)$.
+
+We assign a request $r$ involving the node $v$ to an offline interval of $v$ if it is both the first offline interval of one of the end points of $r$ that ends and if the offline interval ends before the deletion of the edge representing $r$ due to a component deletion.
+
+The requests from $\mathcal{H}=\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that are not assigned to any offline interval are then those which are deleted due to the deletion of a component that took place before the corresponding offline interval ended.
+
+We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from $\mathcal{H}$ which \crep{} pays for but \opt{} does not. We denote the requests in question by $N$, i.e. those from $N=\mathcal{H}\backslash (P\cup OP)$ where $OP$ denotes the requests from $\mathcal{H}$ only \opt{} pays for.
+
+
+\begin{lemma}
+	We assign at most $k\cdot\alpha$ requests from $N$ to any one offline interval.
+\end{lemma}
+
+\textit{Proof.} We fix an arbitrary offline interval. Observe that none of the nodes involved in the assigned requests are moved by \opt{} during the offline interval, hence all the requests in question involve only nodes that \opt{} has placed on the same server as $v$ during the offline interval. 
+
+The number of such nodes is hence limited by the server capacity $k$. As we only examine requests from $\mathcal{H}$ we know that none of these requests have led \crep{} to perform any merges, hence there were at most $\alpha$ requests between $v$ and any one of the other nodes on its server. This bounds the number of requests assigned to the offline interval by $k\cdot\alpha$.\qed\nl
+
+In the following lemma we combine this result with a bound on the cost of \opt{} due to requests we have not accounted for, namely those from $\core(C)$ and those that are not contained in an offline interval because they get deleted by \crep{} due to a component deletion that takes place before their offline interval ends.
+
+
 \begin{lemma}
 	\label{opt_lower_bound}
 	The cost of the solution of \opt{} given input sequence $\sigma$ is bounded by
 	\begin{align*}
-	\opt{}(\sigma)\geq1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k +|P|.
+	\opt{}(\sigma)\geq1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k.
 	\end{align*}
-	where $P$ denotes the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for.
 \end{lemma}
 
-\textit{Proof.} First we define the term \textit{offline interval} of a node $v$ to be the time between two migrations of $v$ in the solution of \opt{}. More specifically an offline interval of node $v$ either starts at time zero (if it is the first offline interval of $v$) or after a migration of $v$ and ends with the next migration of node $v$ that \opt{} performs.
-
-Furthermore we say that an offline interval is contained in the epoch $\epoch(C)$ of a component $C\in\del{}(\sigma)$ if it ends before the time $\tau(C)$. Note that $\tau(C)$ is both the time of the creation of $C$ in the solution of \crep{} as well as the time of its deletion as $C\in\del{}(\sigma)$.
-
-We assign a request $r$ involving the node $v$ to an offline interval of $v$ if it is both the first offline interval of one of the end points of $r$ that ends and if the offline interval ends before the deletion of the edge representing $r$ due to a component deletion.
-
-The requests that are not assigned to any offline interval are then those which are deleted due to the deletion of a component and those that are present at the end of the execution of \crep{}. For the sake of showing the lower bound from the lemma we choose to ignore the latter.
-
-We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from\nl $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ which \crep{} pays for but \opt{} does not. We denote the requests in question, i.e. those from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ which \opt{} does not pay for by $N$.
-As we only examine the amount of such edges assigned to one offline interval we observe that none of the nodes involved in the assigned requests are moved by \opt{} during the offline interval, hence all the requests in question involve only nodes that \opt{} has placed on the same server as $v$ during the offline interval. The number of such nodes is hence limited by the server capacity $k$. As we only examine requests from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ we know that none of these requests have led \crep{} to perform any merges, hence there were at most $\alpha$ requests between $v$ and any one of the other nodes on its server. This bounds the number of requests assigned to the online interval by $k\cdot\alpha$.
-Let $I$ denote the set of requests we have assigned to offline intervals in this way.
+\textit{Proof.} Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
 
 For the following part of the proof we fix an arbitrary component $C\in\del{}(\sigma)$. Let $R$ denote the set of requests from $\halo(C)$ that were not assigned to any offline interval. This means that the nodes involved in requests from $R$ were not moved during the processing of requests from $R$ until the time of deletion of $C$.
 
@@ -479,12 +495,13 @@ Note that we only added edges of weight $\alpha$ to the graph and hence this gra
 
 Finally we need to account for the fact that the migrations of nodes from $C$ that \opt{} performs also end offline intervals and might hence be accounted for twice in our analysis up to this point:
 \begin{align*}
-2\cdot\opt(\sigma)\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+R(C)/k+I/k\cdot\alpha=\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k
+2\cdot\opt(\sigma)&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+R(C)/k+I/(k\cdot\alpha)\cdot\alpha+|P|+|OP|\\
+&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k
 \end{align*}
 where the last equality follows from the fact that 
 %TODO think about whether this is actually true, likely P is missing here 
-$\bigcup_{C\in\del(\sigma)}R(C)\cup I=\bigcup_{C\in\del(\sigma)}halo(C)$ as the different $R(C)$ as well as $I$ are disjoint.
-Hence the cost of \opt{} is at least $1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k+|P|$ as \opt{} pays for requests from $P$ by the definition of $P$.
+$\bigcup_{C\in\del(\sigma)}R(C)\cup I\cup P\cup OP=\bigcup_{C\in\del(\sigma)}\halo(C)$ as the different $R(C)$ as well as $I, P$ and $OP$ are disjoint.
+Hence the cost of \opt{} is at least $1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k$ as \opt{} pays for requests from $P$ by the definition of $P$.
 
 
 
