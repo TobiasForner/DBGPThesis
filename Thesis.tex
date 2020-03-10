@@ -199,7 +199,7 @@
 	
 	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfills this requirement.
 	
-	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\epsilon\cdot|C|,k\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work.
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work.
 	
 	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
 	
@@ -261,6 +261,7 @@
 	 One can see that such cases may also happen at a much larger scale, where almost all requests happen much earlier than the time at which an actual merge of the nodes involved in the requests happens.
 	 
 	 \begin{figure}
+	 	\centering
 	 	\begin{tikzpicture}
 	 	\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=4.5, axis lines=left, xlabel= time, ylabel= nodes]
 	 	%nodes
@@ -312,42 +313,47 @@
 	
 	The fact that \adjDel{} also resets adjacent edges means that we can uniquely identify requests with the deleted component whose deletion led to the reset of the corresponding edge weights to zero. This means that we do not have to face the problems we discussed in the section on \coreDel{}. However the question remains whether the deletion of adjacent edges is valid, i.e. whether we can still preserve a good competitive ratio for this approach.
 	
-	\begin{figure}
-		\begin{tikzpicture}
-		\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=7.5, axis lines=left, xlabel = time, ylabel = nodes]
-		%nodes
-		\addplot[domain=0:20, dashed] {1};
-		\addplot[domain=0:20, dashed] {2};
-		\addplot[domain=0:20, dashed] {3};
-		\addplot[domain=0:20, dashed] {4};
-		\addplot[domain=0:20, dashed] {5};
-		\addplot[domain=0:20, dashed] {6};
-		\addplot[domain=0:20, dashed] {7};
-		
-		%requests
-		\request{1}{2}{1}
-		\request{1}{2}{2}
-		\request{1}{2}{3}
-		\request{2}{3}{4}
-		\request{2}{3}{5}
-		\request{2}{3}{6}
-		\request{3}{4}{7}
-		\request{3}{4}{8}
-		\request{1}{5}{9}
-		\request{1}{5}{10}	
-		\request{1}{6}{11}
-		\request{1}{6}{12}
-		\request{1}{7}{13}
-		\request{1}{7}{14}
-		\request{1}{3}{15}
-		
-		\end{axis}
-		
-		
-		\end{tikzpicture}
-		\caption{illustration for the \adjDel{} approach}\label{exOldCrep}
-		
-	\end{figure}
+	
+		\begin{figure}
+			\centering
+			\begin{tikzpicture}
+			\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=7.5, axis lines=left, xlabel = time, ylabel = nodes]
+			%nodes
+			\addplot[domain=0:20, dashed] {1};
+			\addplot[domain=0:20, dashed] {2};
+			\addplot[domain=0:20, dashed] {3};
+			\addplot[domain=0:20, dashed] {4};
+			\addplot[domain=0:20, dashed] {5};
+			\addplot[domain=0:20, dashed] {6};
+			\addplot[domain=0:20, dashed] {7};
+			
+			%requests
+			\request{1}{2}{1}
+			\request{1}{2}{2}
+			\request{1}{2}{3}
+			\request{2}{3}{4}
+			\request{2}{3}{5}
+			\request{2}{3}{6}
+			\request{3}{4}{7}
+			\request{3}{4}{8}
+			\request{1}{5}{9}
+			\request{1}{5}{10}	
+			\request{1}{6}{11}
+			\request{1}{6}{12}
+			\request{1}{7}{13}
+			\request{1}{7}{14}
+			\request{1}{3}{15}
+			
+			\end{axis}
+			
+			
+			\end{tikzpicture}
+			\caption{illustration for the \adjDel{} approach}\label{exOldCrep}
+			
+		\end{figure}		
+	
+	
+	
 	
 	\cref{exOldCrep} illustrates an example of this challenge mentioned above for the \adjDel{} approach.. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \adjDel{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence.
 	This means that the amount of adjacent edges that are reset may greatly exceed the amount of edges inside a deleted component.
@@ -592,17 +598,30 @@ To obtain the bound on $\beta$ we observe that the components in $\finalComps(\s
 
 \section{Implementation Details}
 \label{implDetSection}
+In this section we first describe the ideas behind our implementation of \crep{} and then illustrate by discussing pseudocode of the implemented algorithm.
+
+\subsection{Algorithm Explanations}
 
 In this section we describe our implementation of \crep{} with augmentation $2+\epsilon$ in greater detail.
 
-In order to limit the section of the graph $G$ maintained by \crep{} that needs to be updated upon a new request between nodes of different components we maintain a decomposition tree defined as follows: the root represents the whole graph and is assigned the connectivity of the whole graph. Given a node $v$ in the tree that represents a (sub-)graph $G'$ of $G$, we decompose $G'$ into sub-graphs whose connectivity is strictly larger than that of $G'$ and add children to $v$ for each such sub-graph. We do not decompose sub-graphs of connectivity at least $\alpha$ as we only need to identify whether a new sub-graph of connectivity at least $\alpha$ was created by the insertion of the most recent request.
+In order to limit the section of the graph $G$ maintained by \crep{} that needs to be updated upon a new request between nodes of different components we maintain a decomposition tree defined as follows: the root represents the whole graph and is assigned the connectivity of the whole graph. Given a node $v$ in the tree that represents a (sub-)graph $G'$ of $G$, we decompose $G'$ into sub-graphs whose connectivity is strictly larger than that of $G'$ and add children to $v$ for each such sub-graph. We do not decompose sub-graphs of connectivity at least $\alpha$ any further as we only need to identify whether a new sub-graph of connectivity at least $\alpha$ was created by the insertion of the most recent request.
 
-\cref{ex_decomp_tree} illustrates this decomposition for the graph shown in \cref{ex_graph}.
+\cref{ex_decomp_tree} illustrates this decomposition for the graph shown in \cref{ex_graph}. In the decomposition tree we have labelled each node with the corresponding subset of vertices and the connectivity of the graph induced by these vertices.
+
+If a new request is revealed to \crep{} then we only need to update the smallest subtree of the decomposition tree which still contains both end points of the request. For example in the case of a new request between 0 and 1 we only need to recompute the decomposition of the sub-graph induced by the vertex set $\{0,1,2\}$. 
+
+This is correct because we can view each decomposition of a sub-graph $G'$ into smaller graphs of a higher connectivity as a set of cuts that separates the nodes of $G'$. Inserting a new edge within $G'$ may only increase the value of the cuts which result in the decomposition of $G'$, but do not affect cuts separating $G'$ from other sub-graphs.
+
+If such a new request led to the creation of a new component this means that two old components that were at least $\alpha$-connected were merged and hence the number of leaves in the decomposition tree decreased. If this is the case then the algorithm checks whether the new component contains more than $k$ nodes. If this is the case then the component is deleted and split into singleton components, each containing one node from the deleted component.
+
+Upon such a component deletion the edges inside of and adjacent to the component are deleted, i.e. their weight is reset to zero. This means that the decomposition tree needs to be recomputed in order to reflect this change.
+
+If however the resulting component $C$ contains at most $k$ nodes the algorithm tries to collocate the nodes of the component while minimizing migration costs, i.e. looking for a cluster which contains as many nodes of the newly merged component as possible but which also has enough free capacity for the remaining nodes to be moved there and for additional reservation $\min\{k, k-(1+\epsilon)|C|\}$ if $C$ contains at least $2/\epsilon$ nodes. %TODO check whether this should be the actual number needed to lead to any reservation
+
+In the next section we provide more detailed pseudocode describing our implementation.
 
 \begin{center}
-	\begin{figure}
-		\label{ex_graph}
-	
+	\begin{figure}	
 	\begin{tikzpicture}[-latex ,auto ,node distance =2.5 cm and 2.5cm ,on grid ,
 	semithick ,
 	state/.style ={ circle ,top color =white , bottom color = white ,
@@ -617,24 +636,25 @@ In order to limit the section of the graph $G$ maintained by \crep{} that needs 
 		 \path (A) edge[-] node[left] {$2$} (B); % 0 to 1
 		 \path (A) edge[-] node[right] {$1$} (C); % 0 to 2
 		 \path (B) edge[-] node[below] {$1$} (C); % 1 to 2
-		 \path (D) edge[-] node[below] {$2$} (E); % 3 to 4
-		 \path (D) edge[-] node[below] {$2$} (F); % 3 to 5
+		 \path (D) edge[-] node[left] {$2$} (E); % 3 to 4
+		 \path (D) edge[-] node[right] {$2$} (F); % 3 to 5
 		 \path (E) edge[-] node[below] {$2$} (F); % 4 to 5
-		 \path (D) edge[-] node[below] {$1$} (G); % 3 to 6
+		 \path (D) edge[-] node[above] {$1$} (G); % 3 to 6
 	\end{tikzpicture}
 	\caption{example graph}
+	\label{ex_graph}
 \end{figure}
 \end{center}
 
 \begin{figure}
-	\label{ex_decomp_tree}
-	\Tree[.$\{0,1,2,3,4,5,6\}$ 	[.$\{0,1,2\}$ 	[.$\{0\}$ ]
-												[.$\{1\}$ ]
-												[.$\{2\}$ ]]
-								[.$\{3,4,5,6\}$ [.$\{3,4,5\}$ ]
-												[.$\{6\}$ ]]]
+	\Tree[.{$\{0,1,2,3,4,5,6\}$\\conn$=0$} 	[.{$\{0,1,2\}$\\conn$=2$} 	[.{$\{0\}$\\conn$=\infty$} ]
+												[.{$\{1\}$\\conn$=\infty$} ]
+												[.{$\{2\}$\\conn$=\infty$} ]]
+								[.{$\{3,4,5,6\}$\\conn$=1$} [.{$\{3,4,5\}$\\conn=4} ]
+												[.{$\{6\}$\\conn$=\infty$} ]]]
 											
-	\caption{decomposition tree example for the graph from \cref{ex_graph} for $\alpha=4$}
+	\caption{decomposition tree for the graph from \cref{ex_graph} for $\alpha=4$}
+	\label{ex_decomp_tree}
 \end{figure}
 
 
@@ -653,6 +673,18 @@ In order to limit the section of the graph $G$ maintained by \crep{} that needs 
 		\STATE delComponents$(del)$
 	\end{algorithmic}
 \end{algorithm}
+
+\cref{insertAndUpdate} is the main function that is called upon each new request. It checks whether the new request is between different $\alpha$-connected components. If this is not the case it determines that this request can not change the decomposition and returns.
+
+Otherwise the weight of the corresponding edge is increased and other routines are called that update the decomposition based on this new edge.
+
+\cref{updateDecomposition} first determines the smallest sub-graph in the decomposition tree that contains both end points of the request and decomposes this sub-graph. For this decomposition step we use the algorithm proposed by Chang et al. (\cite{Chang2013}). %TODO possibly describe the algorithm in greater detail
+
+Afterwards the routine updateMapping is called which compares the number of components to the number of components before the arrival of the request. Only if the number of components has decreased it checks for the new component as otherwise there was no component merge. 
+
+If there was a merge then the routine checks is size and decides whether to delete or to collocate based on the logic described in the previous section.
+
+If a deletion has to be performed then this step is done in the routine delComponents (\cref{delComponents}) which resets all edge weights both of edges between nodes of the component as well as all adjacent edges and finally starts the decomposition of the whole graph in order to arrive at a new decomposition that follows the definition from the previous section.
 
 \begin{algorithm}
 	\caption{updateDecomposition(a,b)}
@@ -692,7 +724,7 @@ In order to limit the section of the graph $G$ maintained by \crep{} that needs 
 	\caption{delComponents(del)}
 	\label{delComponents}
 	\begin{algorithmic}
-		\STATE delInterEdges(del)
+		\STATE delAllEdges(del)
 		\STATE root.connectivity=0
 		\STATE root.children=\{\}
 		\STATE updateDecomposition(0,1)
@@ -700,13 +732,14 @@ In order to limit the section of the graph $G$ maintained by \crep{} that needs 
 \end{algorithm}
 
 
-\subsection{Algorithm Explanations}
+\begin{comment}
 \begin{itemize}
 	\item \cref{insertAndUpdate} calls the other routines as needed
 	\item \cref{updateDecomposition} starts at the smallest subgraph containing the nodes a and b in the decomposition tree and computes a new decomposition of the subgraph. Specifically it uses the decomposition approach from \cite{Chang2013} to decompose one subgraph and then also computes the subgraphs with the next higher connectivity and recurses until the connectivity has reached alpha.
 	\item updateMapping checks whether the alphaConnectedComponents were changed. If yes then it either collocates them if the resulting component is small enough or it adds the component to its return value. Then all the returned components are deleted, i.e. the edges connecting its nodes are deleted and the decomposition is recomputed
 	\item this deletion is performed by \cref{delComponents}
 \end{itemize}
+\end{comment}
 
 
 \section{Evaluation}
@@ -835,6 +868,8 @@ For data set A our decomposition algorithm beats the adaptive ParMetis algorithm
 
 In the next section we discuss the general distribution of the total costs of each algorithm to communication (see \cref{commCostPlot}) and migration costs (\cref{migCostPlot}).\nl
 Both ParMetis as well as our decomposition algorithm produce significantly more migration cost than communication cost while the static algorithm predominantly pays for communication. This shows that the dynamic algorithms tend to migrate too much while the static implementation is restricted to only migrate once to a static configuration it finds suitable and as a result has to pay more for communication. This also shows that there is potential to refine the dynamic implementations in such a way that they produce more balanced, and hopefully also less, cost overall.
+
+\section{Conclusion And Future Work}
 
 \clearpage %move references to the back
 \addcontentsline{toc}{section}{References}
