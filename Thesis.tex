@@ -53,6 +53,8 @@
 \newcommand{\reqTime}{\text{\scriptsize TIME}}
 \newcommand{\comps}{\text{\scriptsize COMPS}}
 \newcommand{\onl}{\text{O{\scriptsize NL}}}
+\newcommand{\coreDel}{\text{C{\scriptsize ORE}-D{\scriptsize EL}}}
+\newcommand{\adjDel}{\text{A{\scriptsize DJ}-D{\scriptsize EL}}}
 
 %commands for input sequence diagrams
 \newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
@@ -183,32 +185,19 @@
 	\subsection{Static Graph Partitioning}
 	
 	\section{Algorithmic Ideas}
-	In this section we describe different solution approaches to the Dynamic Balanced Graph Partitioning problem. Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
-	We first describe this general approach that is common to both algorithms and then address the specific differences and analysis ideas.
+	In this section we describe two different solution approaches to the Dynamic Balanced Graph Partitioning problem. We call these approaches \coreDel{} and \adjDel{} respectively. We first describe this general approach that is common to both algorithms and then address the specific differences and analysis ideas.
+	
+	Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
 	
 	More formally, initially each node forms a singleton component, but as the input sequence $\sigma$ is revealed to the algorithms new communication patterns unfold. The algorithm keeps track of these patterns by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of communication requests between nodes that were part of different components at the time of the request, i.e. for edge $e=\{u,v\}$, $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is \textit{paid} if the nodes are located o different servers at the time of the request.
 	
 	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfills this requirement.
 	
-	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\epsilon\cdot|C|,k\}$, otherwise the reservation is zero.
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\epsilon\cdot|C|,k\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work.
 	
-	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to 
+	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
 	
-	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. We also describe the particular challenges each approch entails when it comes to the competitive analysis.
-	
-	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2015a}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
-	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are lemma 4.3 in \cite{Avin2015a}, property 3 in \cite{Avin2015} and \cref{cut_lemma}.
-	
-	\subsection{CORE-DEL}
-	
-	%TODO maybe write more about connectivity vs density
-	 The first one resets edges which are \textit{contained} in the deleted component, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ and $v$ were contained in component $C$ at the time of its deletion. This approach resembles the one suggested by Avin et al. (\cite{Avin2015a}).
-	 
-	 \subsection{ADJ-DEL}
-	
-	The second algorithm resets all the edges contained in the deleted component $C$ but also resets the weights of edges \textit{adjacent} to $C$, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ or $v$ were contained in component $C$ at the time of its deletion. This second version is very similar to the algorithm proposed by Avin et al. in \cite{Avin2015}.
-	
-	%We have also included a pseudocode description of this general outline of the algorithms in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms.
+	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. We also describe the particular challenges each approach entails when it comes to the competitive analysis.
 	
 	%TODO include reservation in algorithm description
 	\begin{algorithm}
@@ -234,102 +223,121 @@
 		\end{algorithmic}
 	\end{algorithm}
 	
-	The idea for the analysis of both approaches is to account cost to \opt{} for each component $C$ that is deleted by one of the algorithms.
+	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2015a}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
+	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are lemma 4.3 in \cite{Avin2015a}, property 3 in \cite{Avin2015} and \cref{cut_lemma}.
 	
+	Now we describe the differences in the deletion steps of \coreDel{} and \adjDel{} and present the implications for their respective competitive analysis.
 	
-	\section{Problems With Analysis in Previous Work}
-	\label{flawsSection}
-	In this section we point out problems in the analysis in two versions of \cite{Avin2015} which share a similar approach to ours.
+	\subsection{\coreDel{}}
+	%TODO add pseudocode for deltion
 	
-	The problem in the analysis of \cite{Avin2015a} arises due to their usage of the concept of $F(c)$: This contains only edges incident to components from $S(c)$ that arrived after the involved components from $S(c)$ were created by \crep{}.In the analysis it is assumed that only those edges that are contained in $F(c)$ can contribute to the creation of component $c$. As we will show that is not the case and as a result it is very challenging to separate the costs of \opt{} that are due to the requests that actually led to the creation of $c$.
+	 We address \coreDel{} first. In this version edges are reset which are \textit{contained} in the deleted component, i.e. all edges $e=\{u,v\}$ are reset to zero if both $u$ and $v$ were contained in component $C$ at the time of its deletion. This approach resembles the one suggested by Avin et al. (\cite{Avin2015a}).
+	 
+	 The idea of the analysis is then to relate the cost of \coreDel{} with the cost of \opt{} by considering the respective costs due to requests from a deleted component $C$ in the solution of \coreDel{} as these are of high connectivity and are impossible for \opt{} to collocate on one server as each deleted component contains more than $k$ nodes. Then one could sum these costs over all such deleted components in order to bound the costs. For this approach to work however one would have to find a way to cleanly separate requests belonging to one deleted component from those belonging to another in order to establish a lower bound on the cost of \opt{}.
+	 
+	 In this case the edges which are adjacent to a deleted component $C$ remain even after the deletion of $C$ and may then contribute the the creation of a new component $D$. It is now very challenging to attribute any significant cost to \opt{} for these requests.
+	 
+	 \cref{exNewCrep} shows an example sequence of requests for which this approach does not work. The diagram shows horizontal lines, each representing one of the vertices. A vertical line represents a communication request between its end points. For example the sequence shown contains a communication request between nodes 1 and 2 at time $t=5$. Now consider the case where $\alpha=3$ and $k=3$.
+	 
+	 In this sequence the first two requests between nodes 0 and 4 happen without leading to a merge. The following 12 requests lead to a merge of a new component $C$ consisting of the nodes 1,2,3 and 4 which gets deleted by \coreDel{} at time $t=14$. Note now that the edges corresponding to the requests between nodes 0 and 4 are still present even after this deletion. Finally the request at time $t=15$ leads to a merge of nodes 0 and 4.
+	 
+	 One can see that such cases may also happen at a much larger scale, where almost all requests happen much earlier than the time at which an actual merge of the nodes involved in the requests happens.
+	 
+	 \begin{figure}
+	 	\begin{tikzpicture}
+	 	\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=4.5, axis lines=left, xlabel= time, ylabel= nodes]
+	 	%nodes
+	 	\addplot[domain=0:20, dashed] {1};
+	 	\addplot[domain=0:20, dashed] {2};
+	 	\addplot[domain=0:20, dashed] {3};
+	 	\addplot[domain=0:20, dashed] {4};
+	 	
+	 	%requests
+	 	\request{4}{0}{1}
+	 	\request{4}{0}{2}
+	 	\request{1}{2}{3}
+	 	\request{1}{2}{4}
+	 	\request{1}{2}{5}
+	 	\request{2}{3}{6}
+	 	\request{2}{3}{7}
+	 	\request{2}{3}{8}
+	 	\request{1}{2}{9}
+	 	\request{1}{2}{10}
+	 	\request{1}{2}{11}
+	 	\request{2}{4}{12}
+	 	\request{2}{4}{13}
+	 	\request{2}{4}{14}
+	 	\request{4}{0}{15}
+	 	\end{axis}
+	 	
+	 	
+	 	\end{tikzpicture}
+	 	\caption{illustration of the analysis problem with the approach \coreDel{}}\label{exNewCrep}	
+	 \end{figure}
+	 
+	 \subsection{\adjDel{}}
+	 %TODO add pseudocode for deltion
 	
-	In order for the approach in \cite{Avin2015a} to work the different sets $F(c)$ that occur as \crep{} handles input $\sigma$ need to form a partition of all requests such that each request can be mapped to one unique set $F(c)$. Only in this case it is possible to lower bound the cost of \crep{} via the requests in $\bigcup_{c\in\del{}}F(c)$.\
+	The second algorithm, \adjDel{}, resets all the edges contained in the deleted component $C$ but also resets the weights of edges \textit{adjacent} to $C$, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ or $v$ were contained in component $C$ at the time of its deletion. This second version is very similar to the algorithm proposed by Avin et al. in \cite{Avin2015}.
 	
-	\cref{exNewCrep} shows an example sequence of requests for which this approach does not work. The diagram shows horizontal lines, each representing one of the vertices. A vertical line represents a communication request between its end points. For example the sequence shown contains a communication request between nodes 1 and 2 at time $t=5$.
+	The idea for the analysis is here once again to relate the cost of both \opt{} and \adjDel{} to the deleted components in the solution of \adjDel{}.
 	
-	In this sequence the first two requests are not contained in $F(c)$ for any component $c$ as nodes 3 and 4 were part of other components that were eventually deleted by \crep{} before finally being merged at time $t=15$.\nl
+	The fact that \adjDel{} also resets adjacent edges means that we can uniquely identify requests with the deleted component whose deletion led to the reset of the corresponding edge weights to zero. This means that we do not have to dace the problems we discussed in the section on \coreDel{}. However the question remains whether the deletion of adjacent edges is valid, i.e. whether we can still preserve a good competitive ratio for this approach.
 	
 	\begin{figure}
 		\begin{tikzpicture}
-		\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=4.5, axis lines=left, xlabel= time, ylabel= nodes]
+		\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=7.5, axis lines=left, xlabel = time, ylabel = nodes]
 		%nodes
 		\addplot[domain=0:20, dashed] {1};
 		\addplot[domain=0:20, dashed] {2};
 		\addplot[domain=0:20, dashed] {3};
 		\addplot[domain=0:20, dashed] {4};
+		\addplot[domain=0:20, dashed] {5};
+		\addplot[domain=0:20, dashed] {6};
+		\addplot[domain=0:20, dashed] {7};
 		
 		%requests
-		\request{4}{3}{1}
-		\request{4}{3}{2}
+		\request{1}{2}{1}
+		\request{1}{2}{2}
 		\request{1}{2}{3}
-		\request{1}{2}{4}
-		\request{1}{2}{5}
+		\request{2}{3}{4}
+		\request{2}{3}{5}
 		\request{2}{3}{6}
-		\request{2}{3}{7}
-		\request{2}{3}{8}
-		\request{1}{2}{9}
-		\request{1}{2}{10}
-		\request{1}{2}{11}
-		\request{2}{4}{12}
-		\request{2}{4}{13}
-		\request{2}{4}{14}
-		\request{4}{3}{15}
+		\request{3}{4}{7}
+		\request{3}{4}{8}
+		\request{1}{5}{9}
+		\request{1}{5}{10}	
+		\request{1}{6}{11}
+		\request{1}{6}{12}
+		\request{1}{7}{13}
+		\request{1}{7}{14}
+		\request{1}{3}{15}
+		
 		\end{axis}
 		
 		
 		\end{tikzpicture}
-		\caption{problem in the new version}\label{exNewCrep}	
+		\caption{illustration for the \adjDel{} approach}\label{exOldCrep}
+		
 	\end{figure}
 	
-	In an older version (\cite{Avin2015}) of the paper mentioned above we have also discovered some problems. In this version a similar component structure is maintained and merges are performed similarly to our approach as upon the deletion of a component the algorithm not only deletes inner edges but also those that leave the component, i.e. all edges $e={u,v}$ are deleted where $u$ or $v$ are inside the component. However the additional deletions of edges that are leaving the component are not accounted for in the analysis. We show that this approach may lead to scenarios where the amount of edges that are deleted that leave the component may greatly exceed the amount of inner edges. We show in \cref{analysisSection} how the analysis can be adapted while preserving the competitive ratio.
+	\cref{exOldCrep} illustrates an example of this challenge mentioned above for the \adjDel{} approach.. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \adjDel{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence.
+	This means that the amount of adjacent edges that are reset may greatly exceed the amount of edges inside a deleted component.
+	We show in our analysis in \cref{analysisSection} that this approach is valid and allows for a competitive ratio of $O(k\log k)$.
+		
 	
-	\cref{exOldCrep} illustrates an example of the problems mentioned above for this older version of \crep{}. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \crep{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence. 
-
-
-\begin{figure}
-	\begin{tikzpicture}
-	\begin{axis}[xmin=0, xmax=20, ymin=0, ymax=7.5, axis lines=left, xlabel = time, ylabel = nodes]
-	%nodes
-	\addplot[domain=0:20, dashed] {1};
-	\addplot[domain=0:20, dashed] {2};
-	\addplot[domain=0:20, dashed] {3};
-	\addplot[domain=0:20, dashed] {4};
-	\addplot[domain=0:20, dashed] {5};
-	\addplot[domain=0:20, dashed] {6};
-	\addplot[domain=0:20, dashed] {7};
-	
-	%requests
-	\request{1}{2}{1}
-	\request{1}{2}{2}
-	\request{1}{2}{3}
-	\request{2}{3}{4}
-	\request{2}{3}{5}
-	\request{2}{3}{6}
-	\request{3}{4}{7}
-	\request{3}{4}{8}
-	\request{1}{5}{9}
-	\request{1}{5}{10}	
-	\request{1}{6}{11}
-	\request{1}{6}{12}
-	\request{1}{7}{13}
-	\request{1}{7}{14}
-	\request{1}{3}{15}
-	
-	\end{axis}
+	%\section{Problems With Analysis in Previous Work}
+	%\label{flawsSection}
 	
 	
-	\end{tikzpicture}
-	\caption{problem in the older version}\label{exOldCrep}
-	
-\end{figure}
+	%In an older version (\cite{Avin2015}) of the paper mentioned above we have also discovered some problems. In this version a similar component structure is maintained and merges are performed similarly to our approach as upon the deletion of a component the algorithm not only deletes inner edges but also those that leave the component, i.e. all edges $e={u,v}$ are deleted where $u$ or $v$ are inside the component. However the additional deletions of edges that are leaving the component are not accounted for in the analysis. We show that this approach may lead to scenarios where the amount of edges that are deleted that leave the component may greatly exceed the amount of inner edges. We show in \cref{analysisSection} how the analysis can be adapted while preserving the competitive ratio.	
 	
 	
+	%\section{Algorithm Overview}
+	%In this section we give an overview of our algorithm \crep{} which builds upon the ideas of \cite{Avin2015} and \cite{Avin2015a}. Implementation details will be discussed in greater detail in \cref{implDetSection}.
 	
-	\section{Algorithm Overview}
-	In this section we give an overview of our algorithm \crep{} which builds upon the ideas of \cite{Avin2015} and \cite{Avin2015a}. Implementation details will be discussed in greater detail in \cref{implDetSection}.
-	
-	\subsection{Overview}
-	The algorithm maintains a second-order partitioning of the nodes into \textit{communication components} which are sets of nodes that communicated frequently. As more requests from the input sequence $\sigma$ are revealed to the algorithm the components grow in size until the algorithm discovers a component that is too large and hence decides to delete it.
+	%\subsection{Overview}
+	%The algorithm maintains a second-order partitioning of the nodes into \textit{communication components} which are sets of nodes that communicated frequently. As more requests from the input sequence $\sigma$ are revealed to the algorithm the components grow in size until the algorithm discovers a component that is too large and hence decides to delete it.
 	
 	
 
@@ -453,18 +461,21 @@ Finally we summarize our results in the following lemma.
 	\label{crep_upper_bound}
 	With augmentation $2+\epsilon$, \crep{} pays at most total cost\nl $2\cdot\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma)$.
 \end{lemma}
-%TODO make this proof more understandable by starting with a more general statement and plugging in the previous lemmas
-\textit{Proof.} We sum the results from \cref{crep_req_bound} and \cref{crep_mig_bound}:
+
+\textit{Proof.} We sum the results from \cref{crep_req_bound} and \cref{crep_mig_bound} to obtain the lemma:
 \begin{align*}
 \crep(\sigma) & \leq \crep^{req} + \crep^{mig}\\
 & \leq \sum_{C\in\del{}(\sigma)}(|C|\cdot\alpha+|\halo(C)|)+\sum_{C\in \finalComps(\sigma)}|C|\cdot\alpha+\finalWeights(\sigma)\\ &+\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha\\
-&\leq 2\cdot\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma).
+&\leq 2\cdot\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|\\
+&+\finalWeights(\sigma).
 \end{align*}
 \qed
 
 
 
 \subsection{Lower Bound on \opt{}}
+
+In this section we bound the cost on \opt{} by assigning cost to \opt{} based on the size of the components $C$ \crep{} deletes and the associated adjacent edges $\halo(C)$ \crep{} resets to zero during the deletion of $C$. In order to achieve this we first introduce some additional notions.
 
 First we define the term \textit{offline interval} of a node $v$ to be the time between two migrations of $v$ in the solution of \opt{}. More specifically an offline interval of node $v$ either starts at time zero (if it is the first offline interval of $v$) or after a migration of $v$ and ends with the next migration of node $v$ that \opt{} performs.
 
