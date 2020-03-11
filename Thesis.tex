@@ -1,6 +1,6 @@
 \documentclass[a4paper,xcolor=dvipsnames, tikz, 12pt]{article}
 %\documentclass{beamer}
-\usepackage[left=3cm,right=3cm,top=2cm,bottom=2cm]{geometry} % page settings
+\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry} % page settings
 \usepackage{amsmath} % provides many mathematical environments & tools
 \usepackage{amsthm}
 \usepackage{amssymb}
@@ -256,7 +256,7 @@
 	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. We also describe the particular challenges each approach entails when it comes to the competitive analysis.
 	
 	%TODO include reservation in algorithm description
-	\begin{algorithm}
+	\begin{algorithm}[t]
 		\caption{DynamicDecomp}
 		\label{highLevelAlg}
 		\begin{algorithmic}
@@ -505,6 +505,8 @@ We split the requests from $\req{}(C)$ into two sets: $\core(C)$ contains all re
 These are the requests that led to the creation of component $C$. 
 $\halo(C)$ contains all requests from $\req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $\halo(C)=\req(C)\backslash \core(C)$.
 
+These definitions allow us to differentiate between the highly-connected sub-graph induced by the nodes of $C$ and the edges leaving $C$ which are relatively less dense as \crep{} has not merged any outer node with the component.
+
 We start the analysis by bounding the communication cost of \crep{} that is due to serving requests from $\core(C)$ for $C\in\del{}(\sigma)$.
 
 \begin{lemma}
@@ -545,21 +547,22 @@ We fix a component $C\in\del{}(\sigma)\cup \finalComps(\sigma)$ and bound the nu
 As \crep{} only reserves additional space $\lfloor\epsilon\cdot|B|\rfloor$ for components of size at least $2/\epsilon$ for each component $B$ and only moves component $B$ when a merge results in a component of size more than $(1+\epsilon)*|B|$ each node of $C$ is moved at most
 $(2/\epsilon+1)+\log k$ times. Summing over all nodes in $C$ that were actually moved by \crep{} bounds the number of migrations by $|C|\cdot((2/\epsilon+1) \log k)$ as components get deleted without migrations once they contain more than $k$ nodes. This leads to the desired bound on the migration costs as each node migration incurs cost $\alpha$ to \crep{}.\qed\nl
 
-Finally we summarize our results in the following lemma.
+Finally we summarize our results from \cref{crep_req_bound} and \cref{crep_mig_bound} in the following lemma inorder to obtain the final upper bound on the cost of \crep{}.
 
 \begin{lemma}
 	\label{crep_upper_bound}
 	With augmentation $2+\epsilon$, \crep{} pays at most total cost\nl
 	\begin{align*}
-	2\cdot\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma).
+	2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma).
 	\end{align*}
+	where $\comps(\sigma)=\del{}(\sigma)\cup\finalComps(\sigma)$.
 \end{lemma}
 
 \textit{Proof.} We sum the results from \cref{crep_req_bound} and \cref{crep_mig_bound} to obtain the lemma:
 \begin{align*}
 \crep(\sigma) & \leq \crep^{req} + \crep^{mig}\\
-& \leq \sum_{C\in\del{}(\sigma)}(|C|\cdot\alpha+|\halo(C)|)+\sum_{C\in \finalComps(\sigma)}|C|\cdot\alpha+\finalWeights(\sigma)\\ &+\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha\\
-&\leq 2\cdot\sum_{C\in\del{}(\sigma)\cup\finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|\\
+& \leq \sum_{C\in\del{}(\sigma)}(|C|\cdot\alpha+|\halo(C)|)+\sum_{C\in \finalComps(\sigma)}|C|\cdot\alpha+\finalWeights(\sigma)\\ &+\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha\\
+&\leq 2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|\\
 &+\finalWeights(\sigma).
 \end{align*}
 \qed
@@ -615,10 +618,16 @@ Additionally we add an edge of weight one for each request $r=\{u,v\}$ from $\co
 Note that we only added edges of weight $\alpha$ to the graph and hence this graph is also $\alpha$-connected. We conclude that once again \opt{} has to cut edges of weight at least $\frac{|C|+R/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R/k$.
 
 Finally we need to account for the fact that the migrations of nodes from $C$ that \opt{} performs also end offline intervals and might hence be accounted for twice in our analysis up to this point:
-\begin{align*}
-2\cdot\opt(\sigma)&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+R(C)/k+I/(k\cdot\alpha)\cdot\alpha+|P|+|OP|\\
-&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k
-\end{align*}
+
+\begingroup
+	\addtolength{\jot}{1em}
+
+	\begin{align*}
+		2\cdot\opt(\sigma)&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+R(C)/k+I/(k\cdot\alpha)\cdot\alpha+|P|+|OP|\\
+		&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k
+	\end{align*}
+\endgroup
+
 where the last equality follows from the fact that 
 %TODO think about whether this is actually true, likely P is missing here 
 $\bigcup_{C\in\del(\sigma)}R(C)\cup I\cup P\cup OP=\bigcup_{C\in\del(\sigma)}\halo(C)$ as the different $R(C)$ as well as $I, P$ and $OP$ are disjoint.
@@ -626,7 +635,7 @@ Hence the cost of \opt{} is at least $1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cd
 
 
 \subsection{Competitive Ratio}
-In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_lower_bound} to obtain the following theorem.
+In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_lower_bound} to obtain the following theorem which gives us the desired competitive ratio.
 
 \begin{theo}
 	\label{comp_ratio_theo}
@@ -634,14 +643,26 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 \end{theo}
 
 \textit{Proof.} We arbitrarily fix an input sequence $\sigma$ and use our previous results to bound the competitive ratio of \crep{}. We define $\comps(\sigma):=\del{}(\sigma)\cup\finalComps(\sigma)$ in order to improve readability. Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for.
-
+\begingroup
+\addtolength{\jot}{1em}
 \begin{align*}
-\frac{\crep{}(\sigma)}{\opt(\sigma)} &\leq\frac{2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|+\finalWeights(\sigma)}{1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k +|P|}\\
+&\frac{\crep{}(\sigma)-\finalWeights(\sigma)}{\opt(\sigma)}\\ 
+&\leq\frac{2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha +\sum_{C\in\del{}(\sigma)} |\halo(C)|}{1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k +|P|}\\
 &\leq k \log k\frac{2\cdot\sum_{C\in\del(\sigma)}|C|\cdot(2/\epsilon+1) \cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|}{1/2\sum_{(C\in\del{}(\sigma)}|C|\cdot\alpha/2+|\halo(C)|)}+\beta\\
 & = O(k \log k) +\beta
 \end{align*}
+\endgroup
 
-\noindent where $\beta=\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha+\finalWeights(\sigma)$.
+\noindent where
+\begin{align*}
+	\beta=\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha
+\end{align*}
+
+\noindent Let $\beta'=\beta+\finalWeights(\sigma)$. Then it follows that
+
+\begin{align*}
+\frac{\crep{}(\sigma)}{\opt(\sigma)}=O(k \log k) +\beta'.
+\end{align*}
 
 To obtain the bound on $\beta$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta\leq l\cdot k \cdot
 ((2/\epsilon+1)+\log k)\cdot\alpha+k\cdot l\cdot \alpha\in O(k \log k)$.\qed
@@ -649,7 +670,7 @@ To obtain the bound on $\beta$ we observe that the components in $\finalComps(\s
 
 \section{Implementation Details}
 \label{implDetSection}
-In this section we first describe the ideas behind our implementation of \crep{} and then illustrate by discussing pseudocode of the implemented algorithm.
+In this section we first describe the ideas behind our implementation of \crep{} and then illustrate them by discussing pseudocode of the implemented algorithm.
 
 \subsection{Algorithm Explanations}
 
