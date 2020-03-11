@@ -57,6 +57,8 @@
 \newcommand{\onl}{\text{O{\scriptsize NL}}}
 \newcommand{\coreDel}{\text{C{\scriptsize ORE}-D{\scriptsize EL}}}
 \newcommand{\adjDel}{\text{A{\scriptsize DJ}-D{\scriptsize EL}}}
+\newcommand{\static}{\text{S{\scriptsize TATIC}}}
+\newcommand{\adapt}{\text{A{\scriptsize DAPT}}}
 
 %commands for input sequence diagrams
 \newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
@@ -92,41 +94,69 @@
 	% D - 
 	%total cost
 	\pgfplotstableread[row sep=\\,col sep=&]{
-		database & decomposition & ParMetis & Static            \\
-		A		 & 153223	 	 & 254994.20000  & 54919.400000 \\
-		B		 & 313985.600000 & 263278.400000 & 57454.200000 \\
-		C 		 & 295830.800000 & 173940.200000 & 14950.400000 \\
+		database & AdjDel 		& CoreDel & Adaptive & Static            \\
+		A		 & 142317.400000	& 153223	& 254994.20000  & 54919.400000 \\
+		B		 & 224418.600000 & 313985.600000 & 263278.400000 & 57454.200000 \\
+		C 		 & 229010.000000 & 295830.800000 & 173940.200000 & 14950.400000 \\
 		%D		 & 100			 & 80 			 & 50			\\
 	}\totalcostplot
 	
 	%communication cost
 	\pgfplotstableread[row sep=\\,col sep=&]{
-		database & decomposition & ParMetis & Static 			\\
-		A		 & 55375.2		 & 93641.000000 & 48947.000000	\\
-		B		 & 119710.400000 & 56231.600000 & 51519.000000	\\
-		C		 & 110112.800000 & 59455.400000 & 9242.000000	\\
+		database & AdjDel 		& CoreDel 			& Adaptive 	& Static	\\
+		A		 & 54956.200000	& 55375.2		 & 93641.000000 & 48947.000000	\\
+		B		 & 109548.600000 & 119710.400000 & 56231.600000 & 51519.000000	\\
+		C		 & 100612.400000 & 110112.800000 & 59455.400000 & 9242.000000	\\
 		%D 		 & 100			 & 80 			& 50			\\
 	}\commcostplot
 	
 	%migration cost
 	\pgfplotstableread[row sep=\\,col sep=&]{
-		database & decomposition & ParMetis 	 & Static 		\\
-		A		 & 97848		 & 161353.200000 & 5972.400000	\\
-		B		 & 194275.200000 & 207046.800000 & 5935.200000	\\
-		C		 & 185718.000000 & 114484.800000 & 5708.400000	\\
+		database & AdjDel & CoreDel & Adaptive 	 & Static 		\\
+		A		 & 87361.200000 & 97848		 & 161353.200000 & 5972.400000	\\
+		B		 & 114870.000000 & 194275.200000 & 207046.800000 & 5935.200000	\\
+		C		 & 128397.600000 & 185718.000000 & 114484.800000 & 5708.400000	\\
 		%D		 & 100			 & 80 			 & 50			\\
 	}\migcostplot
 	
 	%running time in ms
 	\pgfplotstableread[row sep=\\,col sep=&]{
-		database & decomposition 	& ParMetis		& Static		\\
-		A		 & 102254			& 61374.6 		& 2588.399902	\\
-		B		 & 622934.000000	& 32851.800781	& 2489.399902	\\
-		C		 & 428089.812500	& 42036.601562	& 2460.399902	\\
+		database & AdjDel & CoreDel 	& Adaptive		& Static		\\
+		A		 & 48384.000000 & 102254			& 61374.6 		& 2588.399902	\\
+		B		 & 106468.000000 &622934.000000	& 32851.800781	& 2489.399902	\\
+		C		 & 131988.796875 & 428089.812500	& 42036.601562	& 2460.399902	\\
 		%D 		 & 100				& 80 			& 50			\\
 	}\runtimeplot
 
+%plots for coreDel and adjDel where only 2*alpha-connected components are merged
 
+\pgfplotstableread[row sep=\\,col sep=&]{
+	database & AdjDelDouble & CoreDelDouble 	\\
+	A		 & 111687.200000 & 124514.600000	\\
+	B		 & 156627.400000 & 187898.200000	\\
+	C		 & 153176.600000 & 192994.000000	\\
+}\totalcostplotTwoAlpha
+
+\pgfplotstableread[row sep=\\,col sep=&]{
+	database & AdjDelDouble & CoreDelDouble 	\\
+	A		 & 44522.400000 & 54141.600000		\\
+	B		 & 50406.000000 & 77145.600000		\\
+	C		 & 51382.800000 & 81482.400000		\\
+}\migcostplotTwoAlpha
+
+\pgfplotstableread[row sep=\\,col sep=&]{
+	database & AdjDelDouble & CoreDelDouble 	\\
+	A		 & 67164.800000 & 70373.000000		\\
+	B		 & 106221.400000 & 110752.600000	\\
+	C		 & 101793.800000 & 111511.600000	\\
+}\commcostplotTwoAlpha
+
+\pgfplotstableread[row sep=\\,col sep=&]{
+	database & AdjDelDouble & CoreDelDouble 	\\
+	A		 & 72204.796875  & 175801.796875	\\
+	B		 & 141781.000000 & 948782.375000	\\
+	C		 & 396427.406250 & 938235.000000	\\
+}\runtimeplotTwoAlpha
 
 
 {
@@ -145,7 +175,7 @@
 	
 	\section{Problem Definition}
 	
-	The Dynamic Balanced Graph Partitioning problem was first introduced by Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2015a}).
+	The Dynamic Balanced Graph Partitioning problem was first introduced by Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2015}).
 	
 	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $l$ parts, each of size $k$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.
 	
@@ -165,10 +195,15 @@
 	
 	\section{Related Work}
 	%TODO write introduction: importance of the field due to increasing network loads
-	\subsection{Dynamic Balanced RePartitioning}
-	Avin et al.\cite{Avin2015a} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is the topic of this thesis. They propose a deterministic algorithm for the Dynamic Balanced Graph Partitioning problem with augmentation $2+\epsilon$ for any $\epsilon>1/k$. They also show a lower bound of $k-1$ for the competitive ratio of any online algorithm for the Dynamic Balanced Graph Partitioning problem on two clusters via a reduction to online paging. Furthermore they show that no $\delta$-augmented deterministic online algorithm can achieve a competitive ratio smaller than $k$ for any augmentation $\delta<l$. %We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. 
+	With the ever increasing importance of distributed computation systems also come new challenges. One such challenge is an increase in network traffic. This increased network load may impact the performance of cloud computing networks significantly and should hence be minimized. For example ...%TODO find suitable example
+	One avenue of reducing this network load and hence also increasing the performance of cloud applications is to relocate the different communication partners inside the network dynamically in order to reduce the volume of inter server communication.
 	
-	\subsection{Restricted Variant of Balanced RePartitioning}
+	
+	\subsection{Dynamic Balanced RePartitioning}
+	Avin et al.\cite{Avin2015} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is the topic of this thesis. They propose a deterministic algorithm for the Dynamic Balanced Graph Partitioning problem with augmentation $2+\epsilon$ for any $\epsilon>1/k$. They also show a lower bound of $k-1$ for the competitive ratio of any online algorithm for the Dynamic Balanced Graph Partitioning problem on two clusters via a reduction to online paging. Furthermore they show that no $\delta$-augmented deterministic online algorithm can achieve a competitive ratio smaller than $k$ for any augmentation $\delta<l$. %We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. 
+	
+	
+	\subsection{Restricted Variants of Balanced RePartitioning}
 	Restricted variants of the Balanced RePartitioning problem have also been studied. Here one assumes certain restrictions of the input sequence $\sigma$ and then studies online algorithms for these cases. 
 	
 	Avin, Cohen, Parham and Schmid (\cite{Avin2018}) study one such case: the authors assume that an adversary provides requests according to a fixed distribution of which the optimal algorithm \opt{} has knowledge while an online algorithm that is compared with \opt{} has not. Further they restrict the communication pattern to form a ring-like pattern, i.e. for the case of $n$ nodes $0,...,n-1$ only requests $r$ of the form $r=\{i \mod n, (i+1)\mod n\}$ are allowed. For this case they present a competitive online algorithm which achieves a competitive ratio of $O(\log n)$ with high probability.	
@@ -182,14 +217,27 @@
 	
 	It is important to stress that the assumption that the requests reveal a perfect partitioning of the communication nodes is not applicable for most practical applications and thus it is important to study the general BRP problem without restricting $\sigma$.
 	
+	
 	\subsection{Clustering}
+	
+	Clustering is the process of generating subsets of elements with high similarity (\cite{Hartuv2000}). Desirable properties are \textit{homogeneity}, i.e. high similarity within elements of a cluster and that the similarity is low between elements of different clusters, a property called \textit{separation}. Hartuv and Shamir (\cite{Hartuv2000}) approach this problem by constructing a similarity graph and then separating the nodes via repeated computations of minimum edge cuts. This approach is quite similar to the one we use in order to determine sub-graphs of high connectivity of the communication graph induced by the requests.
+	
+	However we consider an online problem, i.e. algorithms need to react dynamically to changes in the graph and need to maintain their data structures and adapt accordingly whereas clustering considers complete data sets which are static.
+	
 
 	\subsection{Online Paging}
+	In the Online Paging problem (\cite{Fiat2002}, \cite{Epstein2011}) one is given a scenario with a fast cache of $k$ pages and $n-k$ pages in slow memory. In an online manner pages are requested, i.e. without prior knowledge of future requests. If a requested page is in the cache at the time of the request it can be served without cost. If it is in slow memory however, then a \textit{page fault} occurs and the requested page needs to be moved into the cache. If the cache is full then a page from the cache needs to be evicted, i.e. moved to the slow memory in order to make space for the requested one. The goal is to design algorithms which minimize the number of such page faults. 
+	
+	The Dynamic Balanced Graph Partitioning problem can be seen as a generalization of Online Paging. In fact, Avin et al. (\cite{Avin2015}) have shown a reduction of Online Paging to this problem.
+	
+	However the standard version of Online Paging has no equivalent to the option of serving a request remotely as is possible in the Dynamic Balanced Graph Partitioning problem. The variant \textit{with bypassing} allows an algorithm to access pages in slow memory without moving them into the cache, thus providing such an equivalent. It is worth stressing however that in our problem requests involve two nodes while in Online Paging the nodes themselves are requested.
+	
 	
 	\subsection{Static Balanced Graph Partitioning}
 	The Static Balanced Graph Partitioning problem is the static offline variant of the topic of this thesis. In this version an algorithm may not perform any migrations, but has perfect knowledge of the request sequence $\sigma$ and then needs to provide a perfectly balanced partitioning of the $n=k\cdot l$ nodes into $l$ sets of equal size $k$. This scenario can be modelled as a graph partitioning problem where the weight of an edge corresponds to the number of requests between its end points in the input sequence $\sigma$. An algorithm then has to provide a partition of the nodes into sets of exactly $k$ nodes each while minimizing the total edge weights between partitions, i.e. an algorithm needs to minimize the edge cut of the graph. 
 	
 	For the case where $l\geq 3$, Andreev and R\"acke have shown that there is no polynomial time approximation algorithm which guarantees a finite approximation factor unless P=NP (\cite{Andreev2006}).
+	
 	
 	\section{Algorithmic Ideas}
 	\label{algIdeas}
@@ -201,7 +249,7 @@
 	
 	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfills this requirement.
 	
-	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work.
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but instead deleted and hence there would be no benefit to a component taking space more than $k$.
 	
 	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
 	
@@ -231,10 +279,11 @@
 		\end{algorithmic}
 	\end{algorithm}
 	
-	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2015a}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
-	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are lemma 4.3 in \cite{Avin2015a}, property 3 in \cite{Avin2015} and \cref{cut_lemma} in this thesis.
+	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2016}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
+	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are lemma 4.3 in \cite{Avin2015}, property 3 in \cite{Avin2016} and \cref{cut_lemma} in this thesis.
 	
 	Now we describe the differences in the deletion steps of \coreDel{} and \adjDel{} and present the implications for their respective competitive analysis.
+	
 	
 	\subsection{\coreDel{}}
 	
@@ -250,7 +299,7 @@
 		\end{algorithmic}
 	\end{algorithm}
 	
-	 We address \coreDel{} first. In this version edges are reset which are \textit{contained} in the deleted component, i.e. all edges $e=\{u,v\}$ are reset to zero if both $u$ and $v$ were contained in component $C$ at the time of its deletion. This approach resembles the one suggested by Avin et al. (\cite{Avin2015a}) and is also written in pseudocode in \cref{core_del_alg}.
+	 We address \coreDel{} first. In this version edges are reset which are \textit{contained} in the deleted component, i.e. all edges $e=\{u,v\}$ are reset to zero if both $u$ and $v$ were contained in component $C$ at the time of its deletion. This approach resembles the one suggested by Avin et al. (\cite{Avin2015}) and is also written in pseudocode in \cref{core_del_alg}.
 	 
 	 The idea of the analysis is then to relate the cost of \coreDel{} with the cost of \opt{} by considering the respective costs due to requests from a deleted component $C$ in the solution of \coreDel{} as these are of high connectivity and are impossible for \opt{} to collocate on one server as each deleted component contains more than $k$ nodes. Then one could sum these costs over all such deleted components in order to bound the costs. For this approach to work however one would have to find a way to cleanly separate requests belonging to one deleted component from those belonging to another in order to establish a lower bound on the cost of \opt{}.
 	 
@@ -309,7 +358,7 @@
 	 	\end{algorithmic}
 	 \end{algorithm}
 	
-	The second algorithm, \adjDel{}, resets all the edges contained in the deleted component $C$ but also resets the weights of edges \textit{adjacent} to $C$, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ or $v$ were contained in component $C$ at the time of its deletion. This second version is very similar to the algorithm proposed by Avin et al. in \cite{Avin2015}. The deletion method is also described in pseudocode in \cref{adj_del_alg}.
+	The second algorithm, \adjDel{}, resets all the edges contained in the deleted component $C$ but also resets the weights of edges \textit{adjacent} to $C$, i.e. all edges $e=\{u,v\}$ are reset to zero if $u$ or $v$ were contained in component $C$ at the time of its deletion. This second version is very similar to the algorithm proposed by Avin et al. in \cite{Avin2016}. The deletion method is also described in pseudocode in \cref{adj_del_alg}.
 	
 	The idea for the analysis is once again to relate the cost of both \opt{} and \adjDel{} to the deleted components in the solution of \adjDel{}.
 	
@@ -370,7 +419,7 @@
 	
 	
 	%\section{Algorithm Overview}
-	%In this section we give an overview of our algorithm \crep{} which builds upon the ideas of \cite{Avin2015} and \cite{Avin2015a}. Implementation details will be discussed in greater detail in \cref{implDetSection}.
+	%In this section we give an overview of our algorithm \crep{} which builds upon the ideas of \cite{Avin2015} and \cite{Avin2015}. Implementation details will be discussed in greater detail in \cref{implDetSection}.
 	
 	%\subsection{Overview}
 	%The algorithm maintains a second-order partitioning of the nodes into \textit{communication components} which are sets of nodes that communicated frequently. As more requests from the input sequence $\sigma$ are revealed to the algorithm the components grow in size until the algorithm discovers a component that is too large and hence decides to delete it.
@@ -529,7 +578,7 @@ We assign a request $r$ involving the node $v$ to an offline interval of $v$ if 
 
 The requests from $\mathcal{H}=\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that are not assigned to any offline interval are then those which are deleted due to the deletion of a component that took place before the corresponding offline interval ended.
 
-We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from $\mathcal{H}$ which \crep{} pays for but \opt{} does not. We denote the requests in question by $N$, i.e. those from $N=\mathcal{H}\backslash (P\cup OP)$ where $OP$ denotes the requests from $\mathcal{H}$ only \opt{} pays for.
+We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from $\mathcal{H}$ which \crep{} pays for but \opt{} does not. We denote the requests in question by $N$, i.e. those from $N=\mathcal{H}\backslash P$. Note that $\mathcal{H}$ only contains requests which \crep{} payed for due to the definition of $\halo(C)$.
 
 
 \begin{lemma}
@@ -753,17 +802,22 @@ In this section we evaluate the quality of the results and the performance of ou
 \label{algSection}
 We first present the algorithms we compare in order to evaluate our results.
 
-For this evaluation we compare our implementation described in \cref{implDetSection} to a static algorithm available via Metis (METIS\_PartGraphRecursive) (\cite{Karypis1998, Karypis1998a}) and an adaptive/dynamic algorithm (ParMETIS\_V3\_AdaptiveRepart)(\cite{Karypis1999, Schloegel1997, Schloegel2000}) implemented in the ParMetis framework. Both frameworks are known to produce very good results and to be very fast.
+We consider both algorithmic approaches based on maintaining a second-order partition of the nodes into components we discussed in \cref{algIdeas}, i.e. \adjDel{} where on a component deletion all edges inside of and adjacent of the component are deleted and \coreDel{} which only deletes internal edges.
+
+We compare these algorithms both with the static graph partitioning algorithm METIS\_PartGraphRecursive implemented in the METIS framework (\cite{Karypis1998, Karypis1998a}) which we will refer to from now on as \static{} and the adaptive/dynamic algorithm \nl{ParMETIS\_V3\_AdaptiveRepart} (\cite{Karypis1999, Schloegel1997, Schloegel2000}) available in the ParMetis framework, referred to as \adapt{}. Both frameworks are known to produce very good results and to be very fast.
+
 
 %TODO investigate capacity usage of static algorithm
-To our knowledge it is not possible to specify hard limits for the capacities used by the static algorithm implemented in Metis and as a result there are some occurrences where the algorithm exceeds the capacities that are allowed by a small amount.
+%To our knowledge it is not possible to specify hard limits for the capacities used by the static algorithm implemented in Metis and as a result there are some occurrences where the algorithm exceeds the capacities that are allowed by a small amount.
 
 \subsection{Input Data}
 \label{inputDesc}
 
 As input data we use several HPC traces, the nature of the data is described in more detail by Avin, Ghobadi, Griner and Schmid in \cite{Avin2019}.
 
-All data sets contain 1024 different communication nodes and are limited to the first 300 000 requests. The value of $\alpha$ is set to be 6 and the algorithm was tasked to partition the nodes into 32 clusters of size 32 each, i.e. $k=l=32$. The dynamic algorithms were allowed to use augmentation with a factor of $2.1$, i.e. for the dynamic algorithms the maximum cluster capacities were $\lfloor32\cdot2.1\rfloor=67$.
+All data sets contain 1024 different communication nodes and are limited to the first 300 000 requests. The value of $\alpha$ is set to be 6 and the algorithm was tasked to partition the nodes into 32 clusters of size 32 each, i.e. $k=l=32$. The dynamic algorithms are allowed to use augmentation with a factor of $2.1$, i.e. for the dynamic algorithms the maximum cluster capacities are $\lfloor32\cdot2.1\rfloor=67$.
+
+\begin{comment}
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -819,9 +873,244 @@ All data sets contain 1024 different communication nodes and are limited to the 
 	\caption{comparison of run time}\label{runTimePlot}
 \end{figure}
 
+\end{comment}
+
+\subsection{Comparison of \adjDel{} and \coreDel{}}
+
+We compare the results of \adjDel{} and \coreDel{} first. \cref{totalCostPlotCrep} shows the resulting total cost of both algorithms on the different input sets. One can see that \coreDel{} always produces better results, especially for the second and third input set. 
+
+\cref{commCostPlotCrep} and \cref{migCostPlotCrep} show the differences of the two algorithms in terms of communication and migration cost. The figures illustrate that \adjDel{} pays only very slightly less for communication requests than \coreDel{} whereas the former pays significantly reduced migration cost. This suggests that that the deletion of adjacent edges indeed improves the quality of the results by reducing the number of migrations. 
+
+Finally\cref{runTimePlotCrep} compares the running times of both algorithms. One can see that \adjDel{} performs drastically better than \coreDel{} in this regard. This may be due to the fact that \adjDel{} deletes edges more frequently and thus needs to take less edges into account when updating the decomposition tree.
+
+Also note that both algorithms pay significantly more for migrations than for communication. This suggests that there may be room for fine-tuning these algorithms in order achieve a more balanced distribution of the cost. One such adjustment is investigated in the next section, namely whether we can improve the results by changing the algorithms in such a way that they only merge once a connectivity of $2\cdot\alpha$ is reached.
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDel]{\totalcostplot};
+	\addplot table[x=database,y=CoreDel]{\totalcostplot};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the total cost of \adjDel{} and \coreDel{}}\label{totalCostPlotCrep}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDel]{\commcostplot};
+	\addplot table[x=database,y=CoreDel]{\commcostplot};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the communication cost of \adjDel{} and \coreDel{}}\label{commCostPlotCrep}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDel]{\migcostplot};
+	\addplot table[x=database,y=CoreDel]{\migcostplot};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the migration cost of \adjDel{} and \coreDel{}}\label{migCostPlotCrep}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=700000,
+	ylabel={time},
+	]
+	\addplot table[x=database,y=AdjDel]{\runtimeplot};
+	\addplot table[x=database,y=CoreDel]{\runtimeplot};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of running time of \adjDel{} and \coreDel{}}\label{runTimePlotCrep}
+\end{figure}
+
+\subsection{On the Influence of $\alpha$}
+\label{alphaInf}
+
+In the previous section we observed that both \coreDel{} and \adjDel{} have higher migration cost than communication cost. This leads to the questions whether we can find adjustments that allow us to achieve a better balance of the different costs. In this section we investigate the influence of $\alpha$ on the quality of the solution. Namely we discuss the results of both algorithms for the case where they only merge components once a connectivity of at least $2\cdot\alpha$ is reached. Note that this only affects the analysis by constant factors, namely the statements from \cref{cut_lemma} and \cref{cut_lemma_upper} are multiplied by a factor of two.
+
+\cref{totalCostPlotCrep2A} shows the total cost of \adjDel{} and \coreDel{} for this scenario. One can see that the cost of both algorithms is reduced, but \coreDel{} has improved significantly more than \adjDel{}.
+
+When looking at the distribution of this cost to communication and migration costs one can see in \cref{commCostPlotCrep2A} and \cref{migCostPlotCrep2A} that now the communication costs of both algorithms is higher than the migration cost. This suggests that by adjusting the exact value of connectivity at which these algorithms perform their merges one might be able to further improve the quality of the results.
+
+These improvements come at a cost of running time as \cref{runTimePlotCrep2A} shows. Especially the already worse run times of \coreDel{} are drastically increased.
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDelDouble]{\totalcostplotTwoAlpha};
+	\addplot table[x=database,y=CoreDelDouble]{\totalcostplotTwoAlpha};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the total cost of \adjDel{} and \coreDel{} in the case where merges are performed at connectivity $2\cdot\alpha$}\label{totalCostPlotCrep2A}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDelDouble]{\commcostplotTwoAlpha};
+	\addplot table[x=database,y=CoreDelDouble]{\commcostplotTwoAlpha};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the communication cost of \adjDel{} and \coreDel{} in the case where merges are performed at connectivity $2\cdot\alpha$}\label{commCostPlotCrep2A}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDelDouble]{\migcostplotTwoAlpha};
+	\addplot table[x=database,y=CoreDelDouble]{\migcostplotTwoAlpha};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the migration cost of \adjDel{} and \coreDel{} in the case where merges are performed at connectivity $2\cdot\alpha$}\label{migCostPlotCrep2A}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=1100000,
+	ylabel={time},
+	]
+	\addplot table[x=database,y=AdjDelDouble]{\runtimeplotTwoAlpha};
+	\addplot table[x=database,y=CoreDelDouble]{\runtimeplotTwoAlpha};
+	\legend{\adjDel{}, \coreDel{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of running time of \adjDel{} and \coreDel{} in the case where merges are performed at connectivity $2\cdot\alpha$}\label{runTimePlotCrep2A}
+\end{figure}
+
+
+
+\begin{comment}
 We will first discuss the overall results of our experiments, i.e. we will describe the quality of the results (see \cref{totalCostPlot}) as well as the running time needed for each examined algorithm (see \cref{runTimePlot}).\nl
 The static algorithm is shown to give the best results in the shortest time, but the low running was also to be expected as it is only called once as opposed to the 300 000 times the other algorithms need to decide whether they want to change their partitioning. The static algorithm also has knowledge of all requests and as a result is able to produce the best results. \nl
 For data set A our decomposition algorithm beats the adaptive ParMetis algorithm by a significant amount of about one third of the cost of the latter while ParMetis is significantly faster. For data sets B and C ParMetis is shown to produce slightly better results within drastically less computation time. It is worth mentioning that ParMetis uses the ... graph description format that does not allow for easy adaptation on the fly and needed to be recomputed after every request during our tests. However, we chose not to include this in the running time calculations.\nl
+	
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -877,11 +1166,132 @@ For data set A our decomposition algorithm beats the adaptive ParMetis algorithm
 	\caption{comparison of migration cost}\label{migCostPlot}
 \end{figure}
 
-
 In the next section we discuss the general distribution of the total costs of each algorithm to communication (see \cref{commCostPlot}) and migration costs (\cref{migCostPlot}).\nl
 Both ParMetis as well as our decomposition algorithm produce significantly more migration cost than communication cost while the static algorithm predominantly pays for communication. This shows that the dynamic algorithms tend to migrate too much while the static implementation is restricted to only migrate once to a static configuration it finds suitable and as a result has to pay more for communication. This also shows that there is potential to refine the dynamic implementations in such a way that they produce more balanced, and hopefully also less, cost overall.
 
-\section{Conclusion And Future Work}
+\end{comment}
+
+\subsection{Results of \adapt{} and \static}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=Adaptive]{\totalcostplot};
+	\addplot table[x=database,y=Static]{\totalcostplot};
+	\legend{\adapt{}, \static{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the total cost of \adapt{} and \static{}}\label{totalCostPlotMetis}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=Adaptive]{\commcostplot};
+	\addplot table[x=database,y=Static]{\commcostplot};
+	\legend{\adapt{}, \static{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the communication cost of \adapt{} and \static{}}\label{commCostPlotMetis}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=Adaptive]{\migcostplot};
+	\addplot table[x=database,y=Static]{\migcostplot};
+	\legend{\adapt{}, \static{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the migration cost of \adapt{} and \static{}}\label{migCostPlotMetis}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar=7pt,
+	bar width=1.4cm,
+	enlarge x limits=0.25,
+	width=\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	nodes near coords,
+	nodes near coords align={vertical},
+	ymin=0,ymax=150000,
+	ylabel={time},
+	]
+	\addplot table[x=database,y=Adaptive]{\runtimeplot};
+	\addplot table[x=database,y=Static]{\runtimeplot};
+	\legend{\adapt{}, \static{}}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of running time of \adapt{} and \static{}}\label{runTimePlotMetis}
+\end{figure}
+
+\cref{totalCostPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(k\log k)$.
+
+
+
+\section{Conclusion}
+We have discussed different ideas for component-based algorithms for the Dynamic Balanced Graph Partitioning Problem. 
+
+We have shown that our algorithm \adjDel{} has a competitive ratio of $O(k\log k)$ and we have presented our decomposition based approach to its implementation. 
+
+Finally we have evaluated the results of our implementation by comparing it with three other algorithms: \coreDel{} which is a variation of \adjDel{} which deletes fewer edges and \adapt{} and \static{} which are available via METIS and ParMETIS frameworks, respectively. Furthermore we have explored the possibility of making slight adaptations of our algorithms in order to improve their results.
+
+\section{Future Work}
+As discussed in \cref{alphaInf} we see great potential in making adjustments to our algorithms, especially \coreDel{}, in order to improve their results even further while also preserving our result on the competitive ratio.
+
+There may also be potential in adapting and improving our decomposition tree data structure in order to improve running times.
 
 \clearpage %move references to the back
 \addcontentsline{toc}{section}{References}
