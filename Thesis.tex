@@ -742,7 +742,9 @@ If such a new request led to the creation of a new component this means that two
 
 Upon such a component deletion the edges inside of and adjacent to the component are deleted, i.e. their weight is reset to zero. This means that the decomposition tree needs to be recomputed in order to reflect this change.
 
-If however the resulting component $C$ contains at most $k$ nodes the algorithm tries to collocate the nodes of the component while minimizing migration costs, i.e. looking for a cluster which contains as many nodes of the newly merged component as possible but which also has enough free capacity for the remaining nodes to be moved there and for additional reservation $\min\{k, k-\epsilon|C|\}$ if $C$ contains at least $2/\epsilon$ nodes. %TODO check whether this should be the actual number needed to lead to any reservation
+If however the resulting component $C$ contains at most $k$ nodes the algorithm tries to collocate the nodes of the component while minimizing migration costs, i.e. looking for a cluster which contains as many nodes of the newly merged component as possible but which also has enough free capacity for the remaining nodes to be moved there and for additional reservation $\min\{k, k-\epsilon|C|\}$ if $C$ contains at least $2/\epsilon$ nodes.
+
+Both the decision whether to delete as well as possible node migrations are handled in the subroutine \textit{updateMapping} which is given the newly computed $\alpha$-connected components as input.
 
 In the next section we provide more detailed pseudocode describing our implementation.
 
