@@ -282,6 +282,8 @@
 	
 	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but is deleted instead and hence there would be no benefit to a component taking space more than $k$.
 	
+	To this end the algorithms keep track of the reservations for each components. In the pseudocode description we denote the reservation of a component $C$ by $res(C)$ and the current server it is mapped to by $serv(C)$. The free capacity of a server $i$ is denoted by $cap(i)$.
+	
 	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
 	
 	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. We also describe the particular challenges each approach entails when it comes to the competitive analysis.
@@ -298,7 +300,7 @@
 			\STATE $w(\{u,v\})\gets w(\{u,v\})+1$
 			\ENDIF
 			\IF{$\exists$ component set $X$ with connectivity at least $\alpha$ and $|X|>1$ and $nodes(X)\leq k$}
-			\STATE merge(X) and update reservations %TODO make this more explicit
+			\STATE mergeAndRes(X) %TODO make this more explicit
 			\ENDIF
 			\IF{$\exists$ component set $Y$ with connectivity at least $\alpha$ and $nodes(Y)> k$}
 			\STATE delete(Y) //to be specified later
@@ -308,6 +310,25 @@
 			
 		\end{algorithmic}
 	\end{algorithm}
+
+\begin{algorithm}[t]
+	\caption{mergeAndRes(X)}
+	\label{mergeAndRes}
+	\begin{algorithmic}
+		\FORALL { $C\in X$}
+		\STATE $cap(serv(C))\gets cap(serv(C))+res(C)$		
+		\ENDFOR
+		\STATE $N\gets collocate(X)$ //moves all components from $X$ to the same server as described
+		\STATE //N contains the newly created component
+		\IF {$|N|>2/\epsilon$}
+		\STATE //reserve additional space
+		\STATE $res(N)\gets\min\{\lfloor\epsilon\cdot|N|\rfloor,k-|N|\}$
+		\STATE $cap(serv(N))\gets cap(serv(N))-res(N)$
+		\ENDIF	
+		
+		
+	\end{algorithmic}
+\end{algorithm}
 	
 	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2016}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
 	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are lemma 4.3 in \cite{Avin2015}, property 3 in \cite{Avin2016} and \cref{cut_lemma} in this thesis.
@@ -325,6 +346,11 @@
 			\IF{$u\in Y$ and $v\in Y$}
 			\STATE $w(e)\gets0$
 			\ENDIF
+			\ENDFOR
+			
+			\FORALL{$C\in Y$}
+			\STATE $cap(serv(C))\gets cap(serv(C)) +res(C)$
+			\STATE $res(C)\gets 0$			
 			\ENDFOR
 		\end{algorithmic}
 	\end{algorithm}
@@ -386,6 +412,10 @@
 	 		\IF{$u\in Y$ or $v\in Y$}
 	 		\STATE $w(e)\gets0$
 	 		\ENDIF
+	 		\ENDFOR
+	 		\FORALL{$C\in Y$}
+	 		\STATE $cap(serv(C))\gets cap(serv(C)) +res(C)$
+	 		\STATE $res(C)\gets 0$			
 	 		\ENDFOR
 	 	\end{algorithmic}
 	 \end{algorithm}
