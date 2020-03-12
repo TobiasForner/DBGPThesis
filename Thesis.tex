@@ -167,6 +167,9 @@
 }
 \pagenumbering{arabic} 
 
+%\setlength\intextsep{10cm}
+%\setlength{\floatsep}{2pt}
+
 
 	\section{Introduction}
 	
@@ -245,9 +248,9 @@
 	
 	Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
 	
-	More formally, initially each node forms a singleton component, but as the input sequence $\sigma$ is revealed to the algorithms new communication patterns unfold. The algorithm keeps track of these patterns by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of communication requests between nodes that were part of different components at the time of the request, i.e. for edge $e=\{u,v\}$, $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is \textit{paid} if the nodes are located o different servers at the time of the request.
+	More formally, initially each node forms a singleton component, but as the input sequence $\sigma$ is revealed to the algorithms new communication patterns unfold. The algorithm keeps track of these patterns by maintaining a graph in which the nodes represent the actual communication nodes and the weighted edges represent the number of communication requests between nodes that were part of different components at the time of the request, i.e. for edge $e=\{u,v\}$, $w(e)$ represents the number of paid communication requests between $u$ and $v$. We say that a communication request between nodes $u$ and $v$ is \textit{paid} if the nodes are located on different servers at the time of the request.
 	
-	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfills this requirement.
+	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfils this requirement.
 	
 	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but instead deleted and hence there would be no benefit to a component taking space more than $k$.
 	
@@ -452,7 +455,10 @@ We begin our analysis by introducing two general definitions that we will use th
 	An $\alpha$\textit{-connected component} is a maximal set of vertices that is $\alpha$-connected.
 \end{defi}
 
+The following lemma states that there is always at most one mergeable component set after the insertion of a new edge which \crep{} then merges. The earliest point in time a new mergeable component set can emerge is after the next edge is inserted. This lemma is very similar to lemma 4.1 from \cite{Avin2015} in essence. The only difference lies in the definition of a mergeable component set which we have defined via a connectivity measure while the authors of \cite{Avin2015} used density.
+
 \begin{lemma}
+	\label{mergeableLemma}
 	At any time $t$ after \crep{} performed its merge and delete actions all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges.
 \end{lemma}
 
@@ -462,40 +468,61 @@ Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a subs
 
 Then the incrementation of the weight of edge $e$ at time $t$ raised the connectivity of S, but S was not merged into a new $\alpha$-connected component C. if no new component was created at time $t$ then we arrive at a contradiction as \crep{} always merges if there exists a mergeable component set.
 
-Now assume that a component $C$ was created at time t. This means that $C$ must also contain the endpoints of $e$. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S.\qed
+Now assume that a component $C$ was created at time t. This means that $C$ must also contain the endpoints of $e$. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S.\qed\n
+
+The following lemma is adapted for our connectivity-based approach from corollary 4.2 in \cite{Avin2015}.
 
 \begin{lemma}
 	\label{mergeable_lemma}
 	Fix any time t and consider weights right after they were updated by \crep{} but before any merge or delete actions. Then all subsets $S$ of components with $|S|>1$ have connectivity at most $\alpha$ and a mergeable component set S has connectivity exactly $\alpha$.
 \end{lemma}
 
-\textit{Proof.} This lemma follows directly from lemma 2 as connectivities can only increase by at most 1 at each time t.\qed
+\textit{Proof.} This lemma follows directly from \cref{mergeableLemma} as connectivities can only increase by at most 1 at each time t and \cref{mergeableLemma} guarantees that mergeable component sets are merged by \crep{} directly after they emerge, before a new request is revealed.\qed\nl
+
+The following two lemmas combined give us a result similar to lemma 4.3 in \cite{Avin2015}: bounds on the edge weight that is cut when partitioning a mergeable component set, i.e. a set of components of connectivity at least $\alpha$.
+
+We start by establishing a lower bound on this edge weight in the following lemma.
 
 \begin{lemma}
 	\label{cut_lemma}
-	The weight between the components of a component subset S of connectivity $\alpha$ is at least $|S|/2 \cdot alpha$.
+	Given a mergeable set of components S and a partition of $S$ into $g>1$ parts $S_1,...,S_g$. Then the weight between the parts of the partition is at least $g/2 \cdot alpha$.
 \end{lemma}
-\textit{Proof.} Consider the sum of the weighted degrees of all components:
+\textit{Proof.} We construct a graph $G$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes. Note that this graph is $\alpha$-connected. We insert an edge for each edge between the parts $S_i$. Now consider the sum of the weighted degrees of all such nodes $S_i$ in the constructed graph:
 \begin{align*}
-\sum_{c\in S}deg_S(c)=2\sum_{e\in S}w(e)
+\sum_{i\in\{1,...,g\}}deg_G(S_i)=2\sum_{e\in G}w(e)
 \end{align*}
 The equality follows as the left sum counts each edge twice, once for each endpoint.
-Now consider the fact that each component must have degree at least $\alpha$ with respect to the edges in S as S has connectivity $\alpha$ and hence the lemma follows.\qed
+Now consider the fact that each node $S_i$ must have degree at least $\alpha$ with respect to the edges in $G$ because $G$ is $\alpha$-connected. Hence
+\begin{align*}
+2\sum_{e\in G}w(e)=\sum_{i\in\{1,...,g\}}deg_G(S_i)\leq\sum_{i\in\{1,...,g\}}\alpha=g\cdot\alpha
+\end{align*}
+which gives us that $\sum_{e\in G}w(e)\geq g/2\cdot\alpha$.\qed\nl
+
+In the following lemma we establish the upper bound on the cut edge weight when partitioning a mergeable set of components $S$ into $g\geq2$ parts.
 
 \begin{lemma}
 	%TODO rephrase this such that it is clear that this only holds during the normal algorithm flow, i.e. if merges are performed as soon as possible as otherwise we might encounter subsets of cardinality greater than 1 with connectivity greater than alpha
 	\label{cut_lemma_upper}
-	The weight between the components of a component subset $S$ of connectivity $\alpha$ is at most $(|S|-1)\cdot\alpha$ during the execution of \crep{}.
+	Given a mergeable set of components $S$ and a partitioning of $S$ into $g\geq2$ parts $S_1,...,S_g$. The weight between the parts $S_i$ is at most $(g-1)\cdot\alpha$ during the execution of \crep{}.
 \end{lemma}
-\textit{Proof.} We iteratively partition $S$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $S$ which partitions $S$ into the subsets $S_1$ and $S_2$ and iteratively partition the resulting sets until all sets contain only one component each. As this required at most $|S|-1$ cuts of value at most $\alpha$ the lemma follows.\qed
+\textit{Proof.} Similarly to before e construct a graph $G=(V,E)$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes and we insert an edge for each edge between the parts $S_i$. Note again that this graph is $\alpha$-connected. We iteratively partition $G$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $G$ which partitions the nodes of $G$ into the subsets $V_1$ and $V_2$ and iteratively partition the resulting sets until all sets contain only one node of $G$ each. As this required at most $|V|-1$ cuts of value at most $\alpha$ and $|V|=g$ by definition the lemma follows.\qed
+
 
 \subsection{Upper Bound On \crep{}}
+
+We start the analysis of the lower bound of \crep{} by introducing several notions that we will use throughout the analysis.
 
 We define the set $\del(\sigma)$ as the set of components that were deleted by \crep{} during its execution given the input sequence $\sigma$.
 
 We define the following notions for a component $C\in\del{}(\sigma)$, i.e. the subgraph induced by the nodes of $C$ has connectivity at least $\alpha$ and $C$ consists of more than $k$ nodes:
 
-Let $\epoch{}(C)$ denote the (node, time) pairs of nodes in $C$ starting at the time after the time $\tau(node)$ when $node$ was last turned into a singleton component, i.e. $\epoch{}(C)=\bigcup_{n\in nodes(C)}\{n\}\times\{\tau(n)+1,...,\tau(C)\}$. Note that for $C\in\del(\sigma)$, $\tau(C)$ denotes both the time of the creation as well as the time of deletion of $C$. We can use this definition of a component epoch $\epoch(C)$ to uniquely assign each node to a deleted component $C$ at each point in time $t$ (except for nodes in components that persist until the end of sequence $\sigma$).
+Let $\epoch{}(C)$ denote the (node, time) pairs of nodes in $C$ starting at the time after the time $\tau(node)$ when $node$ was last turned into a singleton component, i.e. 
+\begin{align*}
+	\epoch{}(C)=\bigcup_{n\in nodes(C)}\{n\}\times\{\tau(n)+1,...,\tau(C)\}.
+\end{align*}
+
+This definition of an epoch is very similar to the one from \cite{Avin2016} and \cite{Avin2015}.
+Note that for $C\in\del(\sigma)$, $\tau(C)$ denotes both the time of the creation as well as the time of deletion of $C$. We can use this definition of a component epoch $\epoch(C)$ to uniquely assign each node to a deleted component $C$ at each point in time $t$ (except for nodes in components that persist until the end of sequence $\sigma$).
 
 We assign all requests to $\epoch(C)$ whose corresponding requests are deleted because of the deletion of component $C$ and call the set of those requests $\req(C)$.
 We split the requests from $\req{}(C)$ into two sets: $\core(C)$ contains all requests for which both nodes have already been assigned to $C$ at the time of the request, i.e. 
@@ -505,7 +532,7 @@ We split the requests from $\req{}(C)$ into two sets: $\core(C)$ contains all re
 These are the requests that led to the creation of component $C$. 
 $\halo(C)$ contains all requests from $\req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $\halo(C)=\req(C)\backslash \core(C)$.
 
-These definitions allow us to differentiate between the highly-connected sub-graph induced by the nodes of $C$ and the edges leaving $C$ which are relatively less dense as \crep{} has not merged any outer node with the component.
+These definitions allow us to differentiate between the highly-connected sub-graph induced by the nodes of $C$ which are connected by requests from $\core(C)$ and the edges leaving $C$ from $\halo(C)$ which are relatively less dense as \crep{} has not merged any outer node with the component.
 
 We start the analysis by bounding the communication cost of \crep{} that is due to serving requests from $\core(C)$ for $C\in\del{}(\sigma)$.
 
@@ -514,7 +541,8 @@ We start the analysis by bounding the communication cost of \crep{} that is due 
 	With augmentation $2+\epsilon$, \crep{} pays at most communication cost $|C|\cdot\alpha$ for requests in $\core(C)$ where $C\in\del{}(\sigma)$.
 \end{lemma}
 
-\textit{Proof.} The lemma follows directly from \cref{cut_lemma_upper} due to the fact that component sets of connectivity $\alpha$ get merged immediately by \crep{} as shown in \cref{mergeable_lemma}.\qed\nl
+\textit{Proof.} First note that due to \cref{mergeableLemma} \crep{} merges mergeable component sets as soon as they emerge.
+Whenever \crep{} performs a merge of a mergeable component set $S$, \cref{cut_lemma_upper} states that there was at most total edge weight $(|S|-1)\cdot\alpha$ between the merged components, i.e. $w(S)\leq(|S|-1)\cdot\alpha$. Each such merge decreases the number of components that need to be merged in order to form component $C$ by $|S|-1$. Hence \crep{} has payed at most $|C|\cdot\alpha$ communication cost for requests in $\core(C)$.\qed\nl%TODO think again about this lemma
 
 We define $\finalWeights{}(\sigma)$ as the total amount of edge weight between the components $\finalComps{}(\sigma)$ which are present after the execution of \crep{} given input sequence $\sigma$.
 
@@ -529,7 +557,7 @@ Together with the fact that \crep{} pays for all requests in $\halo(C)$ for dele
 \end{lemma}
 
 \textit{Proof.} The number of communication requests that led to the creation of a component $C$ is bounded by $|C|\cdot\alpha$ due to \cref{cut_lemma_upper}.
-If component $C$ was deleted by \crep{} then also the requests from $\halo(C)$ were deleted. All other edge weights were not changed. The remaining communication requests that have not been accounted for so far have either led to the creation of component $C\in\finalComps(\sigma)$ and are hence also bounded by $|C|\cdot\alpha$ or have not let \crep{} to any merge and are hence contained in $\finalComps(\sigma)$. This concludes the proof.\qed\nl
+If component $C$ was deleted by \crep{} then also the edge weights corresponding to requests from $\halo(C)$ were reset to zero. All other edge weights were not changed. The remaining communication requests that have not been accounted for so far have either led to the creation of component $C\in\finalComps(\sigma)$ and are hence also bounded by $|C|\cdot\alpha$ or have not led \crep{} to any merge and are hence contained in $\finalWeights(\sigma)$. This concludes the proof.\qed\nl
 
 We continue our analysis by bounding the migration cost of \crep{} in the following lemma.
 %TODO specify base of the logarithm
@@ -571,7 +599,7 @@ Finally we summarize our results from \cref{crep_req_bound} and \cref{crep_mig_b
 
 \subsection{Lower Bound on \opt{}}
 
-In this section we bound the cost on \opt{} by assigning cost to \opt{} based on the size of the components $C$ \crep{} deletes and the associated adjacent edges $\halo(C)$ \crep{} resets to zero during the deletion of $C$. In order to achieve this we first introduce some additional notions.
+In this section we bound the cost on \opt{} by assigning cost to \opt{} based on the size of the components $C$ that \crep{} deletes and the associated adjacent edges $\halo(C)$ which \crep{} resets to zero during the deletion of $C$. In order to achieve this we first introduce some additional notions.
 
 First we define the term \textit{offline interval} of a node $v$ to be the time between two migrations of $v$ in the solution of \opt{}. More specifically an offline interval of node $v$ either starts at time zero (if it is the first offline interval of $v$) or after a migration of $v$ and ends with the next migration of node $v$ that \opt{} performs.
 
@@ -661,7 +689,7 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 \noindent Let $\beta'=\beta+\finalWeights(\sigma)$. Then it follows that
 
 \begin{align*}
-\frac{\crep{}(\sigma)}{\opt(\sigma)}=O(k \log k) +\beta'.
+\frac{\crep{}(\sigma)}{\opt(\sigma)}\leq O(k \log k) +\beta'.
 \end{align*}
 
 To obtain the bound on $\beta$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta\leq l\cdot k \cdot
@@ -898,11 +926,11 @@ All data sets contain 1024 different communication nodes and are limited to the 
 
 \subsection{Comparison of \adjDel{} and \coreDel{}}
 
-We compare the results of \adjDel{} and \coreDel{} first. \cref{totalCostPlotCrep} shows the resulting total cost of both algorithms on the different input sets. One can see that \coreDel{} always produces better results, especially for the second and third input set. 
+We compare the results of \adjDel{} and \coreDel{} first. \cref{costPlotCrep} shows the resulting total cost of both algorithms on the different input sets as well as how this cost is split between communication and migration costs. One can see that \adjDel{} always produces better results, especially for the second and third input set. 
 
-\cref{commCostPlotCrep} and \cref{migCostPlotCrep} show the differences of the two algorithms in terms of communication and migration cost. The figures illustrate that \adjDel{} pays only very slightly less for communication requests than \coreDel{} whereas the former pays significantly reduced migration cost. This suggests that that the deletion of adjacent edges indeed improves the quality of the results by reducing the number of migrations. 
+We now discuss the differences of the two algorithms in terms of communication and migration cost. The figures illustrate that \adjDel{} pays only very slightly less for communication requests than \coreDel{} whereas the former pays significantly reduced migration cost. This suggests that that the deletion of adjacent edges indeed improves the quality of the results by reducing the number of migrations. 
 
-Finally\cref{runTimePlotCrep} compares the running times of both algorithms. One can see that \adjDel{} performs drastically better than \coreDel{} in this regard. This may be due to the fact that \adjDel{} deletes edges more frequently and thus needs to take less edges into account when updating the decomposition tree.
+Finally \cref{runTimePlotCrep} compares the running times of both algorithms. One can see that \adjDel{} performs drastically better than \coreDel{} in this regard. This may be due to the fact that \adjDel{} deletes edges more frequently and thus needs to take less edges into account when updating the decomposition tree.
 
 Also note that both algorithms pay significantly more for migrations than for communication. This suggests that there may be room for fine-tuning these algorithms in order achieve a more balanced distribution of the cost. One such adjustment is investigated in the next section, namely whether we can improve the results by changing the algorithms in such a way that they only merge once a connectivity of $2\cdot\alpha$ is reached.
 
@@ -1070,11 +1098,11 @@ Also note that both algorithms pay significantly more for migrations than for co
 
 In the previous section we observed that both \coreDel{} and \adjDel{} have higher migration cost than communication cost. This leads to the questions whether we can find adjustments that allow us to achieve a better balance of the different costs. In this section we investigate the influence of $\alpha$ on the quality of the solution. Namely we discuss the results of both algorithms for the case where they only merge components once a connectivity of at least $2\cdot\alpha$ is reached. Note that this only affects the analysis by constant factors, namely the statements from \cref{cut_lemma} and \cref{cut_lemma_upper} are multiplied by a factor of two.
 
-\cref{totalCostPlotCrep2A} shows the total cost of \adjDel{} and \coreDel{} for this scenario. One can see that the cost of both algorithms is reduced, but \coreDel{} has improved significantly more than \adjDel{}.
+\cref{costPlotCrepTwoAlpha} shows the total cost of \adjDel{} and \coreDel{} for this scenario. One can see that the cost of both algorithms is reduced, but \coreDel{} has improved significantly more than \adjDel{}.
 
-When looking at the distribution of this cost to communication and migration costs one can see in \cref{commCostPlotCrep2A} and \cref{migCostPlotCrep2A} that now the communication costs of both algorithms is higher than the migration cost. This suggests that by adjusting the exact value of connectivity at which these algorithms perform their merges one might be able to further improve the quality of the results.
+When looking at the distribution of this cost to communication and migration costs one can see that now the communication costs of both algorithms is higher than the migration cost in all cases. For \coreDel{} this has improved the balance of both costs, but \adjDel{} now has significantly higher communication cost than migration cost. This suggests that by adjusting the exact value of connectivity at which these algorithms perform their merges one might be able to further improve the quality of the results. It may even be possible to adjust this and parameter dynamically based on some data gathered as requests are processed.
 
-These improvements come at a cost of running time as \cref{runTimePlotCrep2A} shows. Especially the already worse run times of \coreDel{} are drastically increased.
+These improvements come at a cost of running time as \cref{runTimePlotCrep2A} shows, almost doubling the times of the previous results in some cases. Especially the already worse run times of \coreDel{} are drastically increased.
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -1459,7 +1487,9 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	\caption{comparison of running time of \adapt{} and \static{}}\label{runTimePlotMetis}
 \end{figure}
 
-\cref{totalCostPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(k\log k)$.
+\cref{costPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(k\log k)$.
+
+Finally \cref{runTimePlotMetis} illustrates the run times of \adapt{} and \static{}. Note that static is only run once on the communication graph after all requests have been revealed which means that it is expected for \static{} to have the fastest running time. But also \adapt{} achieves faster running times than our dynamic implementations.
 
 
 
@@ -1471,9 +1501,13 @@ We have shown that our algorithm \adjDel{} has a competitive ratio of $O(k\log k
 Finally we have evaluated the results of our implementation by comparing it with three other algorithms: \coreDel{} which is a variation of \adjDel{} which deletes fewer edges and \adapt{} and \static{} which are available via METIS and ParMETIS frameworks, respectively. Furthermore we have explored the possibility of making slight adaptations of our algorithms in order to improve their results.
 
 \section{Future Work}
+Even though we have already shown very promising results as to the overall performance of our algorithms together with theoretical guarantees there are still areas in which our work could be expanded upon.
+
 As discussed in \cref{alphaInf} we see great potential in making adjustments to our algorithms, especially \coreDel{}, in order to improve their results even further while also preserving our result on the competitive ratio.
 
 There may also be potential in adapting and improving our decomposition tree data structure in order to improve running times.
+
+One such avenue for improvement may be to parallelize the computation of the decomposition of disjoint subgraphs. This could be both used to handle multiple requests in parallel if they only affect disjoint sub-graphs, i.e. their corresponding trees do not overlap in the decomposition tree, as well as in order to speed up the computation of the decomposition the children trees during the update process after a new request has been received by \crep{}.
 
 \clearpage %move references to the back
 \addcontentsline{toc}{section}{References}
