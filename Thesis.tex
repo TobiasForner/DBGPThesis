@@ -588,7 +588,7 @@ We start by bounding the total edge weight (the total number of requests) we ass
 	We assign at most $k\cdot\alpha$ requests from $N$ to any one offline interval.
 \end{lemma}
 
-\textit{Proof.} We fix an arbitrary offline interval. Observe that none of the nodes involved in the assigned requests are moved by \opt{} during the offline interval, hence all the requests in question involve only nodes that \opt{} has placed on the same server as $v$ during the offline interval. 
+\textit{Proof.} We fix an arbitrary offline interval of node $v$. Observe that none of the nodes involved in the assigned requests are moved by \opt{} during the offline interval, hence all the requests in question involve only nodes that \opt{} has placed on the same server as $v$ during the offline interval. 
 
 The number of such nodes is hence limited by the server capacity $k$. As we only examine requests from $\mathcal{H}$ we know that none of these requests have led \crep{} to perform any merges, hence there were at most $\alpha$ requests between $v$ and any one of the other nodes on its server. This bounds the number of requests assigned to the offline interval by $k\cdot\alpha$.\qed\nl
 
@@ -905,6 +905,58 @@ We compare the results of \adjDel{} and \coreDel{} first. \cref{totalCostPlotCre
 Finally\cref{runTimePlotCrep} compares the running times of both algorithms. One can see that \adjDel{} performs drastically better than \coreDel{} in this regard. This may be due to the fact that \adjDel{} deletes edges more frequently and thus needs to take less edges into account when updating the decomposition tree.
 
 Also note that both algorithms pay significantly more for migrations than for communication. This suggests that there may be room for fine-tuning these algorithms in order achieve a more balanced distribution of the cost. One such adjustment is investigated in the next section, namely whether we can improve the results by changing the algorithms in such a way that they only merge once a connectivity of $2\cdot\alpha$ is reached.
+
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar stacked,
+	bar width=1cm,
+	enlarge x limits=0.25,
+	width=.45\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	%nodes near coords,
+	%nodes near coords align={vertical},
+	ymajorgrids=true,
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDel]{\commcostplot};
+	\addplot table[x=database,y=AdjDel]{\migcostplot};
+	%\legend{communication cost, migration cost}
+	\end{axis}
+	
+	\begin{axis}[
+	ybar stacked,
+	bar width=1cm,
+	enlarge x limits=0.25,
+	width=.45\textwidth,
+	height=.5\textwidth,
+	legend style={at={(-0.2,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	xshift=7cm,
+	%nodes near coords,
+	%nodes near coords align={vertical},
+	ymajorgrids=true,
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=CoreDel]{\commcostplot};
+	\addplot table[x=database,y=CoreDel]{\migcostplot};
+	\legend{communication cost, migration cost}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the total cost of \adjDel{} (left) and \coreDel{} (right)}\label{costPlotCrep}
+\end{figure}
+
+
 
 \begin{figure}
 	\begin{tikzpicture}
