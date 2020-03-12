@@ -852,7 +852,7 @@ Otherwise the weight of the corresponding edge is increased and other routines a
 		\IF{res.connectivity==alpha}
 		\STATE continue
 		\ENDIF
-		\STATE res$\leftarrow$ decompose(current, current.connectivity+1)//decomposition based on s-t-cuts
+		\STATE res$\leftarrow$ decompose(current, current.connectivity+1)//decomposition based on $(s,t)$-cuts
 		\STATE current.connectivity $\leftarrow$ value of smallest encountered cut
 		\IF {current.connectivity$\geq$alpha}
 		\STATE continue
@@ -876,11 +876,13 @@ Otherwise the weight of the corresponding edge is increased and other routines a
 	\end{algorithmic}		
 \end{algorithm}
 
-Afterwards the routine updateMapping is called which compares the number of components to the number of components before the arrival of the request. Only if the number of components has decreased it checks for the new component as otherwise there was no component merge. 
+Afterwards the routine \textit{updateMapping} is called which compares the number of components to the number of components before the arrival of the request. Only if the number of components has decreased it checks for the new component as otherwise there was no component merge. 
 
-If there was a merge then the routine checks is size and decides whether to delete or to collocate based on the logic described in the previous section.
+If there was a merge then the routine checks the size of the newly creted (merged) component and decides whether to delete or to collocate based on the logic described in the previous section.
 
-If a deletion has to be performed then this step is done in the routine delComponents (\cref{delComponents}) which resets all edge weights both of edges between nodes of the component as well as all adjacent edges and finally starts the decomposition of the whole graph in order to arrive at a new decomposition that follows the definition from the previous section.
+If a deletion has to be performed then this step is done in the routine \textit{delComponents} (\cref{delComponents}) which resets all edge weights both of edges between nodes of the component as well as all adjacent edges and finally starts the decomposition of the whole graph in order to arrive at a new decomposition that follows the definition from the previous section.
+
+In the case of a collocation the nodes are moved to a cluster that has enough space while updating the reservations and cluster capacities accordingly.
 
 
 
@@ -911,9 +913,9 @@ In this section we describe our algorithm for the decomposition of a given subgr
 
 Given a node $v$ of the decomposition tree, first a \textit{partition graph} is constructed which is a graph consisting of the nodes in the subgraph represented by $v$ and the edges which are between the nodes of the subgraph. This partition graph also supports merges and cuts of its nodes. More specifically the partition graph is initialized as a graph $P=(V,E)$ with $V=nodes(v)$ and $E=\{e=\{u,w\}\in E'|u\in nodes(v)\text{ and }w\in nodes(v)\}$ where $E'$ represents the set of edges in the graph maintained by \crep{}. Additionally we maintain a mapping $M$ which assigns each node from $V$ a set of the nodes in the subgraph represented by the decomposition tree node $v$. Initially M assigns each node in $V$ the subset containing only the node itself.
 
-We now run a \textit{maximum adjacency search} algorithm, sometimes also called \textit{maximum cardinality search} algorithm (\cite{Stoer1997}) in order to obtain a minimum s-t-cut of the graph.
+We now run a \textit{maximum adjacency search} algorithm, sometimes also called \textit{maximum cardinality search} algorithm, (\cite{Stoer1997}) in order to obtain a minimum $(s,t)$-cut of the graph.
 
-The maximum adjacency search algorithm is defined as follows: We start with an empty list $L$ to which we add an arbitrary node of $P$. We then continually add the most tightly connected node from $V$ to L, i.e. the node which is connected to the nodes in $L$ via edges of the most total weight. Stoer and Wagner (\cite{Stoer1997}) have shown that the edges between the last two nodes $s$ and $t$ added to $L$ form a minimum s-t-cut.
+The maximum adjacency search algorithm is defined as follows: We start with an empty list $L$ to which we add an arbitrary node of $P$. We then continually add the most tightly connected node from $V$ to L, i.e. the node which is connected to the nodes in $L$ via edges of the most total weight. Stoer and Wagner (\cite{Stoer1997}) have shown that the edges between the last two nodes $s$ and $t$ added to $L$ form a minimum $(s,t)$-cut.
 
 We use the value of this cut in order to decide whether to merge the nodes $s$ and $t$ or whether to separate them: if the cut has value less than $c$ we separate the nodes, otherwise we perform a merge.
 
@@ -922,7 +924,7 @@ Here the separation of the nodes $s$ and $t$ means that we remove all edges in t
 In the case of a merge we combine the nodes s and t and merge the outgoing edges, i.e. we replace the set of nodes $V$ of $P$ by the set $V'=V\backslash\{s,t\}\cup\{v'\}$. The edges $E$ of $P$ are modified by removing all edges adjacent to $s$ and $t$ and adding an edge $e'=\{v',u\}$ of weight $w(\{s,u\})+w(\{t,u\})$ where $w(e)$ denotes the weight of edge $e$ if it exists and is equal to zero otherwise.
 Furthermore we adjust the mapping $M$ by setting $M(v')=M(s)\cup M(t)$.
 
-We continually run this algorithm until $P$ contains no edges, i.e. until $E=\emptyset$. The sets of nodes mapped to each ot the nodes of $P$ by $M$ now represent candidate subgraphs for the decomposition. Note though that we have only cut according to minimum s-t-cuts and not according to minimum cuts. This means that the specific sequence in which we have performed the cuts may influence the result. This can be remedied by repeating the procedure on the resulting subgraphs until it returns a subgraph of only one node. This is due to the fact that Chang et al. (\cite{Chang2013}) have shown that this procedure always cuts a subgraph of connectivity less than $c$ at least once (see Cutability Property in \cite{Chang2013}).
+We continually run this algorithm until $P$ contains no edges, i.e. until $E=\emptyset$. The sets of nodes mapped to each ot the nodes of $P$ by $M$ now represent candidate subgraphs for the decomposition. Note though that we have only cut according to minimum $(s,t)$-cuts and not according to minimum cuts. This means that the specific sequence in which we have performed the cuts may influence the result. This can be remedied by repeating the procedure on the resulting subgraphs until it returns a subgraph of only one node. This is due to the fact that Chang et al. (\cite{Chang2013}) have shown that this procedure always cuts a subgraph of connectivity less than $c$ at least once (see Cutability Property in \cite{Chang2013}).
 
 In order to speed up this computation we use the heap data structure proposed and analyzed by Chang et al. (\cite{Chang2013}).
 
@@ -934,7 +936,7 @@ Thus we conclude that this procedure correctly decomposes a given subgraph as Ch
 In this section we discuss the running time of an update of the decomposition tree after a new request has been received. The worst case is in this case given when the whole tree has to be recomputed.
 
 We first discuss the time complexity of decomposing a single tree node $v$. Let the corresponding subgraph be denoted by $G_v=(V_v, E_v)$.
-Since each iteration of the subroutine \textit{decompose} performs at least one cut as long as the connectivity of the given graph is smaller than the current threshold $c$ we conclude that after at most $|V_v|$ iterations of decompose a correct decomposition is found. Each step of \textit{decompose } can be performed in $O(|V_v|\cdot|E_v|)$ a maximum adjacency search finds an arbitrary minimum s-t-cut in time $O(|E_v|)$ as shown in theorem 4.1 in \cite{Chang2013} and as there are at most $|V_v|$ minimum s-t-cuts computed for each invocation of \textit{decompose}.
+Since each iteration of the subroutine \textit{decompose} performs at least one cut as long as the connectivity of the given graph is smaller than the current threshold $c$ we conclude that after at most $|V_v|$ iterations of decompose a correct decomposition is found. Each step of \textit{decompose } can be performed in $O(|V_v|\cdot|E_v|)$ a maximum adjacency search finds an arbitrary minimum $(s,t)$-cut in time $O(|E_v|)$ as shown in theorem 4.1 in \cite{Chang2013} and as there are at most $|V_v|$ minimum $(s,t)$-cuts computed for each invocation of \textit{decompose}.
 
 Hence the complexity of decomposing the subgraph represented by a tree node $v$ is in $O(|V_v|^2|E_v|)$. Let $C_v$ denote the time needed for the decomposition of the subgraph represented  by decomposition tree node $v$.
 
