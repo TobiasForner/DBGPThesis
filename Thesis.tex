@@ -11,6 +11,7 @@
 \usepackage{pgfplots}\pgfplotsset{compat=1.3}
 \usepackage{setspace}
 \usepackage[colorlinks,linkcolor=ForestGreen,citecolor=ForestGreen]{hyperref}
+%\usepackage{hyperref}
 \usepackage[nameinlink, capitalize]{cleveref} %used for cross theorem references
 \setlength{\parindent}{5mm}
 \usepackage[english]{babel}
@@ -60,6 +61,15 @@
 \newcommand{\static}{\text{S{\scriptsize TATIC}}}
 \newcommand{\adapt}{\text{A{\scriptsize DAPT}}}
 
+\newcommand{\dbALong}{Mocfe}
+\newcommand{\dbBLong}{NeckBone}
+\newcommand{\dbCLong}{MultiGrid}
+
+\newcommand{\dbA}{Mocfe}
+\newcommand{\dbB}{NB}
+\newcommand{\dbC}{MG}
+
+
 %commands for input sequence diagrams
 \newcommand{\request}[3]{\draw (axis cs:#3,#1) -- node[left]{} (axis cs:#3,#2);}
 
@@ -76,7 +86,7 @@
 \begin{document}
 	
 	%title page
-	\input{title/title_page}	
+	%\input{title/title_page}	
 	
 	\thispagestyle{empty}
 	\begin{abstract}
@@ -92,36 +102,36 @@
 	%total cost
 	\pgfplotstableread[row sep=\\,col sep=&]{
 		database & AdjDel 		& CoreDel & Adaptive & Static            \\
-		A		 & 142317.400000	& 153223	& 254994.20000  & 54919.400000 \\
-		B		 & 224418.600000 & 313985.600000 & 263278.400000 & 57454.200000 \\
-		C 		 & 229010.000000 & 295830.800000 & 173940.200000 & 14950.400000 \\
+		\dbA		 & 142317.400000	& 153223	& 254994.20000  & 54919.400000 \\
+		\dbB		 & 224418.600000 & 313985.600000 & 263278.400000 & 57454.200000 \\
+		\dbC 		 & 229010.000000 & 295830.800000 & 173940.200000 & 14950.400000 \\
 		%D		 & 100			 & 80 			 & 50			\\
 	}\totalcostplot
 	
 	%communication cost
 	\pgfplotstableread[row sep=\\,col sep=&]{
 		database & AdjDel 		& CoreDel 			& Adaptive 	& Static	\\
-		A		 & 54956.200000	& 55375.2		 & 93641.000000 & 48947.000000	\\
-		B		 & 109548.600000 & 119710.400000 & 56231.600000 & 51519.000000	\\
-		C		 & 100612.400000 & 110112.800000 & 59455.400000 & 9242.000000	\\
+		\dbA		 & 54956.200000	& 55375.2		 & 93641.000000 & 48947.000000	\\
+		\dbB		 & 109548.600000 & 119710.400000 & 56231.600000 & 51519.000000	\\
+		\dbC		 & 100612.400000 & 110112.800000 & 59455.400000 & 9242.000000	\\
 		%D 		 & 100			 & 80 			& 50			\\
 	}\commcostplot
 	
 	%migration cost
 	\pgfplotstableread[row sep=\\,col sep=&]{
 		database & AdjDel & CoreDel & Adaptive 	 & Static 		\\
-		A		 & 87361.200000 & 97848		 & 161353.200000 & 5972.400000	\\
-		B		 & 114870.000000 & 194275.200000 & 207046.800000 & 5935.200000	\\
-		C		 & 128397.600000 & 185718.000000 & 114484.800000 & 5708.400000	\\
+		\dbA		 & 87361.200000 & 97848		 & 161353.200000 & 5972.400000	\\
+		\dbB		 & 114870.000000 & 194275.200000 & 207046.800000 & 5935.200000	\\
+		\dbC		 & 128397.600000 & 185718.000000 & 114484.800000 & 5708.400000	\\
 		%D		 & 100			 & 80 			 & 50			\\
 	}\migcostplot
 	
 	%running time in ms
 	\pgfplotstableread[row sep=\\,col sep=&]{
 		database & AdjDel & CoreDel 	& Adaptive		& Static		\\
-		A		 & 48384.000000 & 102254			& 61374.6 		& 2588.399902	\\
-		B		 & 106468.000000 &622934.000000	& 32851.800781	& 2489.399902	\\
-		C		 & 131988.796875 & 428089.812500	& 42036.601562	& 2460.399902	\\
+		\dbA		 & 48384.000000 & 102254			& 61374.6 		& 2588.399902	\\
+		\dbB		 & 106468.000000 &622934.000000	& 32851.800781	& 2489.399902	\\
+		\dbC		 & 131988.796875 & 428089.812500	& 42036.601562	& 2460.399902	\\
 		%D 		 & 100				& 80 			& 50			\\
 	}\runtimeplot
 
@@ -129,30 +139,30 @@
 
 \pgfplotstableread[row sep=\\,col sep=&]{
 	database & AdjDelDouble & CoreDelDouble 	\\
-	A		 & 111687.200000 & 124514.600000	\\
-	B		 & 156627.400000 & 187898.200000	\\
-	C		 & 153176.600000 & 192994.000000	\\
+	\dbA		 & 111687.200000 & 124514.600000	\\
+	\dbB		 & 156627.400000 & 187898.200000	\\
+	\dbC		 & 153176.600000 & 192994.000000	\\
 }\totalcostplotTwoAlpha
 
 \pgfplotstableread[row sep=\\,col sep=&]{
 	database & AdjDelDouble & CoreDelDouble 	\\
-	A		 & 44522.400000 & 54141.600000		\\
-	B		 & 50406.000000 & 77145.600000		\\
-	C		 & 51382.800000 & 81482.400000		\\
+	\dbA		 & 44522.400000 & 54141.600000		\\
+	\dbB		 & 50406.000000 & 77145.600000		\\
+	\dbC		 & 51382.800000 & 81482.400000		\\
 }\migcostplotTwoAlpha
 
 \pgfplotstableread[row sep=\\,col sep=&]{
 	database & AdjDelDouble & CoreDelDouble 	\\
-	A		 & 67164.800000 & 70373.000000		\\
-	B		 & 106221.400000 & 110752.600000	\\
-	C		 & 101793.800000 & 111511.600000	\\
+	\dbA		 & 67164.800000 & 70373.000000		\\
+	\dbB		 & 106221.400000 & 110752.600000	\\
+	\dbC		 & 101793.800000 & 111511.600000	\\
 }\commcostplotTwoAlpha
 
 \pgfplotstableread[row sep=\\,col sep=&]{
 	database & AdjDelDouble & CoreDelDouble 	\\
-	A		 & 72204.796875  & 175801.796875	\\
-	B		 & 141781.000000 & 948782.375000	\\
-	C		 & 396427.406250 & 938235.000000	\\
+	\dbA		 & 72204.796875  & 175801.796875	\\
+	\dbB		 & 141781.000000 & 948782.375000	\\
+	\dbC		 & 396427.406250 & 938235.000000	\\
 }\runtimeplotTwoAlpha
 
 
@@ -170,12 +180,32 @@
 
 	\section{Introduction}
 	
+	
+	
 	\section{Contributions}
+	
+	We study the Dynamic Balanced Graph Partitioning problem and show a competitive ratio of $O(k\log k)$ for our component-based deterministic algorithm \crep{} in the variant \adjDel{} which runs in polynomial time. We also discuss challenges in the competitive analysis of this algorithm and of another algorithm, \coreDel, for which we have not shown a competitive ratio. Both approaches are adaptations of prior work (\cite{Avin2015, Avin2016}).
+	
+	We discuss the details of our implementation which uses a decomposition tree data structure in order to reduce the update times when recomputing the components upon receiving new requests.
+	
+	We evaluate our implementation and compare it with \coreDel{} that is also based on components, but for which we have not shown a competitive ratio. Furthermore we compare it with two existing implementations in the METIS and ParMETIS framework and we explore first ideas of adjusting parameters to improve the results of the presented algorithms even further.
+	
+	\section{Definitions and Notation}
+	
+	In this section we introduce several definitions and notations that will be used throughout the thesis.
+	
+	First we define a graph $G=(V, E, [w])$ where $V$ is a set of vertices and $E\subseteq V \times V$ is a set of edges. $w:E \rightarrow \mathbb{N}$ assigns each edge an (integer) weight. Note that we always assume that a graph is undirected, i.e. edges are of the form $\{u,v\}$ where $u\neq v$ and $u,v\in V$. A graph is only unweighted or directed if it is explicitly mentioned or clear from the context.
+	
+	Given a graph $G=(V,E,w)$ we define an (edge) cut of $G$ as a pair of two disjoint subsets $X,Y$ of $V$ such that $X\cup Y=V$. The value of this cut is then the sum of the weight of edges between nodes from $X$ and $Y$, i.e. $\sum_{e=\{u,v\}\in E:u\in X, v\in Y}w(e)$ is the value of the cut $(X,Y)$. Note that such a cut can also be defined by the set of the edges connecting $X$ and $Y$ that are cut. We call a cut a \textit{minimum (edge) cut} of $G$ if it is one of the cuts with minimum value.
+	
+	We use this definition a minimum cut to introduce the notion of \textit{connectivity}. The connectivity of a graph $G$ is equal to the value of a minimum edge cut of $G$. This definition will be used in order to define the communication components our algorithm maintains as these are subsets of $V$ who induce subgraphs of high connectivity. We explain the concept of components in greater detail in \cref{algIdeas}.
+	
+	Furthermore we define the term $(s,t)$\textit{-cut} a cut $(X,Y)$ for which $s\in X$ and $Y\in X$, i.e. a $(s,t)$-cut separates the nodes $s$ and $t$ in $G$. Then a \textit{minimum} $(s,t)$-cut is a $(s,t)$-cut of minimum value. Note that a minimum $(s,t)$-cut is not necessarily a minimum cut.
 	
 	
 	\section{Problem Definition}
 	
-	Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2016}) first introduced the Dynamic Balanced Graph Partitioning problem under the name of \textit{Balanced RePartitioning} (BRP) problem, but changed the name to the former in a leter version of their paper (\cite{Avin2015}).
+	Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2016}) first introduced the Dynamic Balanced Graph Partitioning problem under the name of \textit{Balanced RePartitioning} (BRP) problem, but changed the name to the former in a more recent version of their paper (\cite{Avin2015}).
 	
 	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $l$ parts, each of size $k$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.
 	
@@ -894,7 +924,7 @@ We compare these algorithms both with the static graph partitioning algorithm ME
 \subsection{Input Data}
 \label{inputDesc}
 
-As input data we use several HPC traces, the nature of the data is described in more detail by Avin, Ghobadi, Griner and Schmid in \cite{Avin2019}.
+As input data we use several HPC traces (\dbALong{}, \dbBLong{}, \dbCLong{}), the nature of the data is described in more detail by Avin, Ghobadi, Griner and Schmid in \cite{Avin2019}. For the sake of readability we use abbreviations NB for NeckBone and MG for MultiGrid.
 
 All data sets contain 1024 different communication nodes and are limited to the first 300 000 requests. The value of $\alpha$ is set to be 6 and the algorithm was tasked to partition the nodes into 32 clusters of size 32 each, i.e. $k=l=32$. The dynamic algorithms are allowed to use augmentation with a factor of $2.1$, i.e. for the dynamic algorithms the maximum cluster capacities are $\lfloor32\cdot2.1\rfloor=67$.
 
@@ -976,7 +1006,7 @@ Also note that both algorithms pay significantly more for migrations than for co
 	height=.5\textwidth,
 	legend style={at={(0.5,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	%nodes near coords,
@@ -998,7 +1028,7 @@ Also note that both algorithms pay significantly more for migrations than for co
 	height=.5\textwidth,
 	legend style={at={(-0.2,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	xshift=7cm,
@@ -1109,13 +1139,13 @@ Also note that both algorithms pay significantly more for migrations than for co
 	height=.5\textwidth,
 	legend style={at={(0.5,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	nodes near coords,
 	nodes near coords align={vertical},
 	ymin=0,ymax=700000,
-	ylabel={time},
+	ylabel={time [ms]},
 	]
 	\addplot table[x=database,y=AdjDel]{\runtimeplot};
 	\addplot table[x=database,y=CoreDel]{\runtimeplot};
@@ -1146,7 +1176,7 @@ These improvements come at a cost of running time as \cref{runTimePlotCrep2A} sh
 	height=.5\textwidth,
 	legend style={at={(0.5,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	%nodes near coords,
@@ -1168,7 +1198,7 @@ These improvements come at a cost of running time as \cref{runTimePlotCrep2A} sh
 	height=.5\textwidth,
 	legend style={at={(-0.2,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	xshift=7cm,
@@ -1277,13 +1307,13 @@ These improvements come at a cost of running time as \cref{runTimePlotCrep2A} sh
 	height=.5\textwidth,
 	legend style={at={(0.5,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	nodes near coords,
 	nodes near coords align={vertical},
 	ymin=0,ymax=1100000,
-	ylabel={time},
+	ylabel={time [ms]},
 	]
 	\addplot table[x=database,y=AdjDelDouble]{\runtimeplotTwoAlpha};
 	\addplot table[x=database,y=CoreDelDouble]{\runtimeplotTwoAlpha};
@@ -1372,7 +1402,7 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	height=.5\textwidth,
 	legend style={at={(0.5,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	%nodes near coords,
@@ -1394,7 +1424,7 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	height=.5\textwidth,
 	legend style={at={(-0.2,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	xshift=7cm,
@@ -1503,13 +1533,13 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	height=.5\textwidth,
 	legend style={at={(0.5,-0.25)},
 		anchor=north,legend columns=-1},
-	symbolic x coords={A,B,C},
+	symbolic x coords={\dbA,\dbB,\dbC},
 	xtick=data,
 	xlabel={input set},
 	nodes near coords,
 	nodes near coords align={vertical},
 	ymin=0,ymax=150000,
-	ylabel={time},
+	ylabel={time [ms]},
 	]
 	\addplot table[x=database,y=Adaptive]{\runtimeplot};
 	\addplot table[x=database,y=Static]{\runtimeplot};
