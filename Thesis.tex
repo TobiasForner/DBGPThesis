@@ -73,9 +73,6 @@
 
 
 
-%TODO find out journal or equivalent for some references
-
-
 \begin{document}
 	
 	%title page
@@ -180,8 +177,6 @@
 	
 	Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2016}) first introduced the Dynamic Balanced Graph Partitioning problem under the name of \textit{Balanced RePartitioning} (BRP) problem, but changed the name to the former in a leter version of their paper (\cite{Avin2015}).
 	
-	The  was first introduced by Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2015}).
-	
 	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $l$ parts, each of size $k$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.
 	
 	More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.
@@ -199,8 +194,9 @@
 	Often we allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\times n/k$ nodes to each server where $\delta>1$. This augmented online algorithm is than compared with the optimal offline algorithm \opt{} which is not allowed to use any augmentation.
 	
 	\section{Related Work}
-	%TODO write introduction: importance of the field due to increasing network loads
-	With the ever increasing importance of distributed computation systems also come new challenges. One such challenge is an increase in network traffic. This increased network load may impact the performance of cloud computing networks significantly and should hence be minimized. For example ...%TODO find suitable example
+	
+	With the ever increasing importance of distributed computation systems also come new challenges. One such challenge is an increase in network traffic. This increased network load may impact the performance of cloud computing networks significantly and should hence be minimized. For example studies (\cite{Ghobadi2016, Hamedazimi2014}) have shown that reconfigurable datacenter networks can provide performance similar to regular datacenter networks while having significantly lower cost in some cases.
+	
 	One avenue of reducing this network load and hence also increasing the performance of cloud applications is to relocate the different communication partners inside the network dynamically in order to reduce the volume of inter server communication.
 	
 	
@@ -260,7 +256,6 @@
 	
 	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. We also describe the particular challenges each approach entails when it comes to the competitive analysis.
 	
-	%TODO include reservation in algorithm description
 	\begin{algorithm}[t]
 		\caption{DynamicDecomp}
 		\label{highLevelAlg}
@@ -503,7 +498,6 @@ which gives us that $\sum_{e\in G}w(e)\geq g/2\cdot\alpha$.\qed\nl
 In the following lemma we establish the upper bound on the cut edge weight when partitioning a mergeable set of components $S$ into $g\geq2$ parts.
 
 \begin{lemma}
-	%TODO rephrase this such that it is clear that this only holds during the normal algorithm flow, i.e. if merges are performed as soon as possible as otherwise we might encounter subsets of cardinality greater than 1 with connectivity greater than alpha
 	\label{cut_lemma_upper}
 	Given a mergeable set of components $S$ and a partitioning of $S$ into $g\geq2$ parts $S_1,...,S_g$. The weight between the parts $S_i$ is at most $(g-1)\cdot\alpha$ during the execution of \crep{}.
 \end{lemma}
@@ -718,7 +712,7 @@ If such a new request led to the creation of a new component this means that two
 
 Upon such a component deletion the edges inside of and adjacent to the component are deleted, i.e. their weight is reset to zero. This means that the decomposition tree needs to be recomputed in order to reflect this change.
 
-If however the resulting component $C$ contains at most $k$ nodes the algorithm tries to collocate the nodes of the component while minimizing migration costs, i.e. looking for a cluster which contains as many nodes of the newly merged component as possible but which also has enough free capacity for the remaining nodes to be moved there and for additional reservation $\min\{k, k-(1+\epsilon)|C|\}$ if $C$ contains at least $2/\epsilon$ nodes. %TODO check whether this should be the actual number needed to lead to any reservation
+If however the resulting component $C$ contains at most $k$ nodes the algorithm tries to collocate the nodes of the component while minimizing migration costs, i.e. looking for a cluster which contains as many nodes of the newly merged component as possible but which also has enough free capacity for the remaining nodes to be moved there and for additional reservation $\min\{k, k-\epsilon|C|\}$ if $C$ contains at least $2/\epsilon$ nodes. %TODO check whether this should be the actual number needed to lead to any reservation
 
 In the next section we provide more detailed pseudocode describing our implementation.
 
@@ -896,10 +890,6 @@ We first present the algorithms we compare in order to evaluate our results.
 We consider both algorithmic approaches based on maintaining a second-order partition of the nodes into components we discussed in \cref{algIdeas}, i.e. \adjDel{} where on a component deletion all edges inside of and adjacent of the component are deleted and \coreDel{} which only deletes internal edges.
 
 We compare these algorithms both with the static graph partitioning algorithm METIS\_PartGraphRecursive implemented in the METIS framework (\cite{Karypis1998, Karypis1998a}) which we will refer to from now on as \static{} and the adaptive/dynamic algorithm \nl{ParMETIS\_V3\_AdaptiveRepart} (\cite{Karypis1999, Schloegel1997, Schloegel2000}) available in the ParMetis framework, referred to as \adapt{}. Both frameworks are known to produce very good results and to be very fast.
-
-
-%TODO investigate capacity usage of static algorithm
-%To our knowledge it is not possible to specify hard limits for the capacities used by the static algorithm implemented in Metis and as a result there are some occurrences where the algorithm exceeds the capacities that are allowed by a small amount.
 
 \subsection{Input Data}
 \label{inputDesc}
