@@ -56,8 +56,8 @@
 \newcommand{\reqTime}{\text{\scriptsize TIME}}
 \newcommand{\comps}{\text{\scriptsize COMPS}}
 \newcommand{\onl}{\text{O{\scriptsize NL}}}
-\newcommand{\coreDel}{\text{C{\scriptsize ORE}-D{\scriptsize EL}}}
-\newcommand{\adjDel}{\text{A{\scriptsize DJ}-D{\scriptsize EL}}}
+\newcommand{\coreDel}{\text{C{\scriptsize REP}-C{\scriptsize ORE}}}
+\newcommand{\adjDel}{\text{C{\scriptsize REP}-A{\scriptsize DJ}}}
 \newcommand{\static}{\text{S{\scriptsize TATIC}}}
 \newcommand{\adapt}{\text{A{\scriptsize DAPT}}}
 
@@ -184,7 +184,7 @@
 	
 	\section{Contributions}
 	
-	We study the Dynamic Balanced Graph Partitioning problem and show a competitive ratio of $O(k\log k)$ for our component-based deterministic algorithm \crep{} in the variant \adjDel{} which runs in polynomial time. We also discuss challenges in the competitive analysis of this algorithm and of another algorithm, \coreDel, for which we have not shown a competitive ratio. Both approaches are adaptations of prior work (\cite{Avin2015, Avin2016}).
+	We study the Dynamic Balanced Graph Partitioning problem and show a competitive ratio of $O(2/\epsilon k\log k)$ for our component-based deterministic algorithm \crep{} in the variant \adjDel{} which runs in polynomial time. We also discuss challenges in the competitive analysis of this algorithm and of another algorithm, \coreDel, for which we have not shown a competitive ratio. Both approaches are adaptations of prior work (\cite{Avin2015, Avin2016}).
 	
 	We discuss the details of our implementation which uses a decomposition tree data structure in order to reduce the update times when recomputing the components upon receiving new requests.
 	
@@ -280,17 +280,17 @@
 	
 	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfils this requirement.
 	
-	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but instead deleted and hence there would be no benefit to a component taking space more than $k$.
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but is deleted instead and hence there would be no benefit to a component taking space more than $k$.
 	
 	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
 	
 	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. We also describe the particular challenges each approach entails when it comes to the competitive analysis.
 	
 	\begin{algorithm}[t]
-		\caption{DynamicDecomp}
+		\caption{\crep{}}
 		\label{highLevelAlg}
 		\begin{algorithmic}
-			\STATE Initialize an empty graph on n nodes
+			\STATE Initialize an empty graph on $n$ nodes
 			\STATE turn each of the n nodes into a singleton component
 			\FORALL{$r=\{u,v\}\in\sigma$}
 			
@@ -301,7 +301,7 @@
 			\STATE merge(X) and update reservations %TODO make this more explicit
 			\ENDIF
 			\IF{$\exists$ component set $Y$ with connectivity at least $\alpha$ and $nodes(Y)> k$}
-			\STATE delete(Y)
+			\STATE delete(Y) //to be specified later
 			\ENDIF	
 			
 			\ENDFOR
@@ -340,6 +340,8 @@
 	 In this sequence the first two requests between nodes 0 and 4 happen without leading to a merge. The following 12 requests lead to a merge of a new component $C$ consisting of the nodes 1,2,3 and 4 which gets deleted by \coreDel{} at time $t=14$. Note now that the edges corresponding to the requests between nodes 0 and 4 are still present even after this deletion. Finally the request at time $t=15$ leads to a merge of nodes 0 and 4.
 	 
 	 One can see that such cases may also happen at a much larger scale, where almost all requests happen much earlier than the time at which an actual merge of the nodes involved in the requests happens.
+	 
+	 These problems suggest that the approach of accounting cost for each component deletion in order to achieve a competitive ratio may be very challenging or even not possible. It remains to be seen whether there is another analysis approach for this case that may be more promising.
 	 
 	 \begin{figure}
 	 	\centering
@@ -436,9 +438,9 @@
 	
 	
 	
-	\cref{exOldCrep} illustrates an example of this challenge mentioned above for the \adjDel{} approach.. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \adjDel{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence.
+	\cref{exOldCrep} illustrates an example of this challenge mentioned above for the \adjDel{} approach. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \adjDel{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence.
 	This means that the amount of adjacent edges that are reset may greatly exceed the amount of edges inside a deleted component.
-	We show in our analysis in \cref{analysisSection} that this approach is valid and allows for a competitive ratio of $O(k\log k)$.
+	We show in our analysis in \cref{analysisSection} that this approach is valid and allows for a competitive ratio of $O(2/\epsilon k\log k)$.
 		
 	
 	%\section{Problems With Analysis in Previous Work}
@@ -459,14 +461,14 @@
 \section{Analysis}
 For the sake of this analysis we examine the \adjDel{} algorithm from \cref{algIdeas} and name the algorithm \crep{} from now on.
 
-We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(k\log k)$-competitive.
+We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(2/\epsilon k\log k)$-competitive.
 \label{analysisSection}
 
 \subsection{Algorithm Definitions}
 We begin our analysis by introducing two general definitions that we will use throughout the analysis.
 
 \begin{defi}
-	Define for any subset S of components $w(S)$ as the total weight of all edges between nodes of S.
+	Define for any subset $S$ of components $w(S)$ as the total weight of all edges between nodes of $S$.
 \end{defi}
 
 \begin{defi}
@@ -482,14 +484,14 @@ We begin our analysis by introducing two general definitions that we will use th
 	An $\alpha$\textit{-connected component} is a maximal set of vertices that is $\alpha$-connected.
 \end{defi}
 
-The following lemma states that there is always at most one mergeable component set after the insertion of a new edge which \crep{} then merges. The earliest point in time a new mergeable component set can emerge is after the next edge is inserted. This lemma is very similar to lemma 4.1 from \cite{Avin2015} in essence. The only difference lies in the definition of a mergeable component set which we have defined via a connectivity measure while the authors of \cite{Avin2015} used density.
+The following lemma states that there is always at most one mergeable component set after the insertion of a new edge which \crep{} then merges. The earliest point in time a new mergeable component set can emerge is after the next edge is inserted. This lemma is very similar to Lemma 4.1 from \cite{Avin2015} in essence. The only difference for \crep{} lies in the definition of a mergeable component set which we have defined via a connectivity measure while the authors of \cite{Avin2015} used density.
 
 \begin{lemma}
 	\label{mergeableLemma}
 	At any time $t$ after \crep{} performed its merge and delete actions all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges.
 \end{lemma}
 
-\textit{Proof.} We proof the lemma by an induction on steps. The lemma holds trivially at time 0.
+\textit{Proof.} We prove the lemma by an induction on steps. The lemma holds trivially at time 0.
 
 Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a subset $S$ of components with connectivity at least $\alpha$ and $|S|>1$. We may assume that $t$ is the earliest time for which $S$ has connectivity $\alpha$.
 
@@ -506,7 +508,7 @@ The following lemma is adapted for our connectivity-based approach from corollar
 
 \textit{Proof.} This lemma follows directly from \cref{mergeableLemma} as connectivities can only increase by at most 1 at each time t and \cref{mergeableLemma} guarantees that mergeable component sets are merged by \crep{} directly after they emerge, before a new request is revealed.\qed\nl
 
-The following two lemmas combined give us a result similar to lemma 4.3 in \cite{Avin2015}: bounds on the edge weight that is cut when partitioning a mergeable component set, i.e. a set of components of connectivity at least $\alpha$.
+The following two lemmas combined give us a result similar to Lemma 4.3 in \cite{Avin2015}: bounds on the edge weight that is cut when partitioning a mergeable component set, i.e. a set of components of connectivity at least $\alpha$.
 
 We start by establishing a lower bound on this edge weight in the following lemma.
 
@@ -529,7 +531,7 @@ In the following lemma we establish the upper bound on the cut edge weight when 
 
 \begin{lemma}
 	\label{cut_lemma_upper}
-	Given a mergeable set of components $S$ and a partitioning of $S$ into $g\geq2$ parts $S_1,...,S_g$. The weight between the parts $S_i$ is at most $(g-1)\cdot\alpha$ during the execution of \crep{}.
+	Given a mergeable set of components $S$ and a partitioning of $S$ into $g\geq2$ parts $S_1,...,S_g$. The weight between the parts $S_i$ is at most $(g-1)\cdot\alpha$ during the execution of \crep{} (in the version \adjDel{}).
 \end{lemma}
 \textit{Proof.} Similarly to before e construct a graph $G=(V,E)$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes and we insert an edge for each edge between the parts $S_i$. Note again that this graph is $\alpha$-connected. We iteratively partition $G$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $G$ which partitions the nodes of $G$ into the subsets $V_1$ and $V_2$ and iteratively partition the resulting sets until all sets contain only one node of $G$ each. As this required at most $|V|-1$ cuts of value at most $\alpha$ and $|V|=g$ by definition the lemma follows.\qed
 
@@ -693,7 +695,7 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 
 \begin{theo}
 	\label{comp_ratio_theo}
-	With augmentation $(2+\epsilon)$ the competitive ratio of \crep{} is in $O(k \log k)$.
+	With augmentation $(2+\epsilon)$ the competitive ratio of \crep{} is in $O(2/\epsilon k \log k)$.
 \end{theo}
 
 \textit{Proof.} We arbitrarily fix an input sequence $\sigma$ and use our previous results to bound the competitive ratio of \crep{}. We define $\comps(\sigma):=\del{}(\sigma)\cup\finalComps(\sigma)$ in order to improve readability. Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for.
@@ -703,7 +705,7 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 &\frac{\crep{}(\sigma)-\finalWeights(\sigma)}{\opt(\sigma)}\\ 
 &\leq\frac{2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha +\sum_{C\in\del{}(\sigma)} |\halo(C)|}{1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k +|P|}\\
 &\leq k \log k\frac{2\cdot\sum_{C\in\del(\sigma)}|C|\cdot(2/\epsilon+1) \cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|}{1/2\sum_{(C\in\del{}(\sigma)}|C|\cdot\alpha/2+|\halo(C)|)}+\beta\\
-& = O(k \log k) +\beta
+& = O(2/\epsilon k \log k) +\beta
 \end{align*}
 \endgroup
 
@@ -719,10 +721,12 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 \end{align*}
 
 To obtain the bound on $\beta$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta\leq l\cdot k \cdot
-((2/\epsilon+1)+\log k)\cdot\alpha+k\cdot l\cdot \alpha\in O(k \log k)$.\qed
+((2/\epsilon+1)+\log k)\cdot\alpha+k\cdot l\cdot \alpha\in O(k \log k)$.\qed\nl
+
+So far we have shown that \crep{} is competitive. In \cref{run_time_sec} we will show that our version \adjDel{} of \crep{} can be implemented in polynomial time.
 
 
-\section{Implementation Details}
+\section{Efficient Implementation Details}
 \label{implDetSection}
 In this section we first describe the ideas behind our implementation of \crep{} and then illustrate them by discussing pseudocode of the implemented algorithm.
 
@@ -895,8 +899,9 @@ In order to speed up this computation we use the heap data structure proposed an
 Thus we conclude that this procedure correctly decomposes a given subgraph as Chang et al. have also stated in Theorem 3.1 in \cite{Chang2013}.
 
 
-\subsection{Time Complexity}
-In this section we discuss the time complexity of an update of the decomposition tree after a new request has been received. The worst case is in this case given when the whole tree has to be recomputed.
+\subsection{Running Time}
+\label{run_time_sec}
+In this section we discuss the running time of an update of the decomposition tree after a new request has been received. The worst case is in this case given when the whole tree has to be recomputed.
 
 We first discuss the time complexity of decomposing a single tree node $v$. Let the corresponding subgraph be denoted by $G_v=(V_v, E_v)$.
 Since each iteration of the subroutine \textit{decompose} performs at least one cut as long as the connectivity of the given graph is smaller than the current threshold $c$ we conclude that after at most $|V_v|$ iterations of decompose a correct decomposition is found. Each step of \textit{decompose } can be performed in $O(|V_v|\cdot|E_v|)$ a maximum adjacency search finds an arbitrary minimum s-t-cut in time $O(|E_v|)$ as shown in theorem 4.1 in \cite{Chang2013} and as there are at most $|V_v|$ minimum s-t-cuts computed for each invocation of \textit{decompose}.
@@ -1551,7 +1556,7 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	\caption{comparison of running time of \adapt{} and \static{}}\label{runTimePlotMetis}
 \end{figure}
 
-\cref{costPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(k\log k)$.
+\cref{costPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(2/\epsilon k\log k)$.
 
 Finally \cref{runTimePlotMetis} illustrates the run times of \adapt{} and \static{}. Note that static is only run once on the communication graph after all requests have been revealed which means that it is expected for \static{} to have the fastest running time. But also \adapt{} achieves faster running times than our dynamic implementations.
 
@@ -1560,7 +1565,7 @@ Finally \cref{runTimePlotMetis} illustrates the run times of \adapt{} and \stati
 \section{Conclusion}
 We have discussed different ideas for component-based algorithms for the Dynamic Balanced Graph Partitioning Problem. 
 
-We have shown that our algorithm \adjDel{} has a competitive ratio of $O(k\log k)$ and we have presented our decomposition based approach to its implementation. 
+We have shown that our algorithm \adjDel{} has a competitive ratio of $O(2/\epsilon k\log k)$ and we have presented our decomposition based approach to its implementation. 
 
 Finally we have evaluated the results of our implementation by comparing it with three other algorithms: \coreDel{} which is a variation of \adjDel{} which deletes fewer edges and \adapt{} and \static{} which are available via METIS and ParMETIS frameworks, respectively. Furthermore we have explored the possibility of making slight adaptations of our algorithms in order to improve their results.
 
