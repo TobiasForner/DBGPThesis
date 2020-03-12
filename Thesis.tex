@@ -957,6 +957,8 @@ Also note that both algorithms pay significantly more for migrations than for co
 \end{figure}
 
 
+\begin{comment}
+	
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -1035,6 +1037,7 @@ Also note that both algorithms pay significantly more for migrations than for co
 	\end{tikzpicture}
 	\caption{comparison of the migration cost of \adjDel{} and \coreDel{}}\label{migCostPlotCrep}
 \end{figure}
+\end{comment}
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -1073,6 +1076,58 @@ When looking at the distribution of this cost to communication and migration cos
 
 These improvements come at a cost of running time as \cref{runTimePlotCrep2A} shows. Especially the already worse run times of \coreDel{} are drastically increased.
 
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
+	ybar stacked,
+	bar width=1cm,
+	enlarge x limits=0.25,
+	width=.45\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	%nodes near coords,
+	%nodes near coords align={vertical},
+	ymajorgrids=true,
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=AdjDelDouble]{\commcostplotTwoAlpha};
+	\addplot table[x=database,y=AdjDelDouble]{\migcostplotTwoAlpha};
+	%\legend{communication cost, migration cost}
+	\end{axis}
+	
+	\begin{axis}[
+	ybar stacked,
+	bar width=1cm,
+	enlarge x limits=0.25,
+	width=.45\textwidth,
+	height=.5\textwidth,
+	legend style={at={(-0.2,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	xshift=7cm,
+	%nodes near coords,
+	%nodes near coords align={vertical},
+	ymajorgrids=true,
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=CoreDelDouble]{\commcostplotTwoAlpha};
+	\addplot table[x=database,y=CoreDelDouble]{\migcostplotTwoAlpha};
+	\legend{communication cost, migration cost}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the total cost of \adjDel{} (left) and \coreDel{} (right) in the case where merges are performed at connectivity $2\cdot\alpha$}\label{costPlotCrepTwoAlpha}
+\end{figure}
+
+\begin{comment}
+	
 \begin{figure}
 	\begin{tikzpicture}
 	\begin{axis}[
@@ -1150,6 +1205,7 @@ These improvements come at a cost of running time as \cref{runTimePlotCrep2A} sh
 	\end{tikzpicture}
 	\caption{comparison of the migration cost of \adjDel{} and \coreDel{} in the case where merges are performed at connectivity $2\cdot\alpha$}\label{migCostPlotCrep2A}
 \end{figure}
+\end{comment}
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -1249,6 +1305,58 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 \begin{figure}
 	\begin{tikzpicture}
 	\begin{axis}[
+	ybar stacked,
+	bar width=1cm,
+	enlarge x limits=0.25,
+	width=.45\textwidth,
+	height=.5\textwidth,
+	legend style={at={(0.5,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	%nodes near coords,
+	%nodes near coords align={vertical},
+	ymajorgrids=true,
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=Adaptive]{\commcostplot};
+	\addplot table[x=database,y=Adaptive]{\migcostplot};
+	%\legend{communication cost, migration cost}
+	\end{axis}
+	
+	\begin{axis}[
+	ybar stacked,
+	bar width=1cm,
+	enlarge x limits=0.25,
+	width=.45\textwidth,
+	height=.5\textwidth,
+	legend style={at={(-0.2,-0.25)},
+		anchor=north,legend columns=-1},
+	symbolic x coords={A,B,C},
+	xtick=data,
+	xlabel={input set},
+	xshift=7cm,
+	%nodes near coords,
+	%nodes near coords align={vertical},
+	ymajorgrids=true,
+	ymin=0,ymax=370000,
+	ylabel={cost},
+	]
+	\addplot table[x=database,y=Static]{\commcostplot};
+	\addplot table[x=database,y=Static]{\migcostplot};
+	\legend{communication cost, migration cost}
+	\end{axis}
+	\end{tikzpicture}
+	\caption{comparison of the total cost of \adapt{} (left) and \static{} (right)}\label{costPlotMetis}
+\end{figure}
+
+\begin{comment}
+	
+\begin{figure}
+	\begin{tikzpicture}
+	\begin{axis}[
 	ybar=7pt,
 	bar width=1.4cm,
 	enlarge x limits=0.25,
@@ -1323,6 +1431,7 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	\end{tikzpicture}
 	\caption{comparison of the migration cost of \adapt{} and \static{}}\label{migCostPlotMetis}
 \end{figure}
+\end{comment}
 
 \begin{figure}
 	\begin{tikzpicture}
