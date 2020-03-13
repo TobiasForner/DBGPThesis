@@ -90,11 +90,11 @@
 	
 	\thispagestyle{empty}
 	\begin{abstract}
-		This thesis studies the Dynamic Balanced Graph Partitioning problem, an online graph partitioning variant. The task is to maintain a mapping of communication nodes to servers while requests are revealed according to an unknown pattern. As the requests appear they need to be served, either remotely between nodes on different servers at cost one or locally within a server at cost zero. Before a request has to be served there is an option to change the mapping of nodes to servers, i.e. to migrate at cost $\alpha$ per node move.
+		This thesis studies the Dynamic Balanced Graph Partitioning problem, an online graph partitioning variant. The task is to maintain a mapping of communication nodes to servers while requests are revealed according to an unknown pattern. As the requests appear they need to be served, either remotely between nodes on different servers at cost one or locally within a server at cost zero. Before a request has to be served there is an option to change the mapping of nodes to servers, i.e. to migrate, at cost $\alpha$ per node move.
 		
-		We provide a polynomial-time deterministic algorithm for this problem which achieves a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and evaluate its results and performance by comparing it with the results of another algorithm variant and with existing implementations.
+		We discuss different algorithmic approaches and we discuss the respective implications for the competitive analysis.
 		
-		\ldots
+		Furthermore we provide a polynomial-time deterministic algorithm for this problem which achieves a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and evaluate its results and performance by comparing it with the results of another algorithm variant and with existing implementations.
 	\end{abstract}
 	
 	\clearpage
@@ -184,18 +184,18 @@
 
 	\section{Introduction}
 	
-	With the continually increasing importance of distributed and cloud computation it is also of great importance to minimize the communication overhead due to the increased network load. One method for achieving such improvements is to relocate communication partners (e.g. virtual machines) that communicate/interact frequently on the same servers. This way expensive and slow inter-server communication can be minimized by handling this communication within a server, without generating network load.
+	With the continually increasing importance of distributed and cloud computation it is of great importance to minimize the communication overhead due to the increased network load. One method for achieving such improvements is to relocate communication partners (e.g. virtual machines) that communicate or interact frequently on the same servers. This way expensive and slow inter-server communication can be minimized by handling this communication within a server, without generating network load.
 	
 	As communication patterns may change over time it seems especially promising to develop algorithms which adapt this distribution over time, i.e. in a dynamic fashion.
 	
 	The Dynamic Balanced Graph Partitioning (DBGP) problem (\cite{Avin2015, Avin2016}) which we study in this thesis provides a suitable model for these situations. Here algorithms are tasked to provide a mapping of communication nodes (virtual machines) to servers of fixed equal size and to dynamically adapt this mapping as new communication requests are revealed in an online manner, i.e. without prior knowledge of future requests. The goal is then to provide algorithms that maintain such a mapping while minimizing communication and migration costs.
 	
-	In our model a communication request can be served remotely, i.e. between nodes mapped to different servers at cost one or locally if both nodes are located on the same server at no cost. Before the cost for the current request is payed an algorithm has the option to migrate nodes at a cost of $\alpha$ for each node move.
+	In our model a communication request can be served remotely, i.e. between nodes mapped to different servers, at cost one or locally if both nodes are located on the same server at no cost. Before the cost for the current request is payed an algorithm has the option to migrate nodes at a cost of $\alpha$ for each node move.
 	
 	This problem has a variety of interesting challenges and properties:
 	\begin{itemize}
-		\item \textbf{Buy or Rent}(\cite{Epstein2014}): should a request be served remotely at a small cost (rent) or should the communicating nodes be collocated at a large cost up-front(buy)?
-		\item \textbf{How should nodes be collocated?} If there are nodes which communicate frequently it seems advantageous to collocate them. Then the question is how one could define such a threshold and also which node should be moved in order to migrate as little as possible.
+		\item \textbf{Rent or buy}(\cite{Epstein2014}): should a request be served remotely at a small cost (rent) or should the communicating nodes be collocated at a large cost up-front(buy)?
+		\item \textbf{How should nodes be collocated?} If there are nodes which communicate frequently it seems advantageous to collocate them. Then the question is how to define such a threshold and also which nodes should be moved in order to migrate as little as possible.
 		\item \textbf{Should nodes be evicted?} If nodes are to be collocated there might not be enough space left in a suitable target server. In this case it needs to be decided which other nodes should be evicted from the target server.
 	\end{itemize}
 	
@@ -209,7 +209,7 @@
 	
 	We evaluate our implementation and compare it with \coreDel{} that is also based on components, but for which we have not shown a competitive ratio. Furthermore we compare it with two existing implementations in the METIS and ParMETIS framework and we explore first ideas of adjusting parameters to improve the results of the presented algorithms even further.
 	
-	\section{Definitions and Notation}
+	\section{General Definitions and Notation}
 	
 	In this section we introduce several definitions and notations that will be used throughout the thesis.
 	
@@ -219,7 +219,7 @@
 	
 	We use this definition of a minimum cut to introduce the notion of \textit{connectivity}. The connectivity of a graph $G$ is equal to the value of a minimum edge cut of $G$. This definition will be used in order to define the communication components our algorithm maintains as these are subsets of $V$ who induce subgraphs of high connectivity. We explain the concept of components in greater detail in \cref{algIdeas}.
 	
-	Furthermore we define the term $(s,t)$\textit{-cut} a cut $(X,Y)$ for which $s\in X$ and $Y\in X$, i.e. a $(s,t)$-cut separates the nodes $s$ and $t$ in $G$. Then a \textit{minimum} $(s,t)$-cut is a $(s,t)$-cut of minimum value. Note that a minimum $(s,t)$-cut is not necessarily a minimum cut.
+	Furthermore we define the term $(s,t)$\textit{-cut} as a cut $(X,Y)$ for which $s\in X$ and $Y\in X$, i.e. a $(s,t)$-cut separates the nodes $s$ and $t$ in $G$. Then a \textit{minimum} $(s,t)$-cut is a $(s,t)$-cut of minimum value. Note that a minimum $(s,t)$-cut is not necessarily a minimum cut.
 	
 	Finally we call an injective function $m:X\rightarrow Y$ a mapping of $X$ to $Y$. We use this terminology for example when we talk about the assignment of nodes to servers.
 	
@@ -228,7 +228,9 @@
 	
 	Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2016}) first introduced the Dynamic Balanced Graph Partitioning problem under the name of \textit{Balanced RePartitioning} (BRP) problem, but changed the name to the former in a more recent version of their paper (\cite{Avin2015}).
 	
-	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $l$ parts, each of size $k$ while minimizing both the cost due to communication and due to node migrations defined as follows. The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Such a move of one vertex incurs cost $\alpha>1$.
+	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $l$ parts, each of size $k$ while minimizing both the cost due to communication and due to node migrations defined as follows. 
+	
+	The communication cost is zero if both nodes are located on the same server at the time the request needs to be served and it is normalized to one if they are mapped to different servers. An algorithm may perform node migrations in order to change the mapping of nodes to servers prior to serving the communication request at time $t$. Each move of a vertex incurs cost $\alpha>1$.
 	
 	More formally we are given $l$ servers $V_0,...,V_{l-1}$, each with capacity $k$ and an initial perfect mapping of $n=k\cdot l$ nodes to the $l$ servers, i.e. each server is assigned exactly $k$ nodes. An input sequence $\sigma=(u_1, v_1), (u_2, v_2),...(u_i,v_i),...$ describes the sequence of communication requests: the pair $(u_t, v_t)$ represents a communication request between the nodes $u_t$ and $v_t$ arriving at time $t$. At time $t$ the algorithm is allowed to perform node migrations at a cost of $\alpha>1$ per move. After the migration step the algorithm pays cost 1 if $u_t$ and $v_t$ are mapped to different servers and does not pay any cost otherwise. Note that an algorithm may also choose to perform no migrations at all.
 	
@@ -242,17 +244,23 @@
 	\end{align*} 
 	where $\onl{}(\sigma)$ and $\opt{}(\sigma)$ denote the cost of serving input sequence $\sigma$ of \onl{} and \opt{} respectively.
 	
-	Often we allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\times n/k$ nodes to each server where $\delta>1$. This augmented online algorithm is than compared with the optimal offline algorithm \opt{} which is not allowed to use any augmentation.
+	Often we allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\cdot n/k$ nodes to each server where $\delta>1$. This augmented online algorithm is than compared with the optimal offline algorithm \opt{} which is not allowed to use any augmentation.
 	
 	\section{Related Work}
 	
 	With the ever increasing importance of distributed computation systems also come new challenges. One such challenge is an increase in network traffic. This increased network load may impact the performance of cloud computing networks significantly and should hence be minimized. For example studies (\cite{Ghobadi2016, Hamedazimi2014}) have shown that reconfigurable datacenter networks can provide performance similar to regular datacenter networks while having significantly lower cost in some cases.
 	
-	One avenue of reducing this network load and hence also increasing the performance of cloud applications is to relocate the different communication partners inside the network dynamically in order to reduce the volume of inter server communication.
+	This suggests that there is great potential in exploring methods of designing and controlling dynamic networks in order to reduce the overall network load.
+	
+	One avenue of reducing this network load and hence also increasing the performance of cloud applications is to relocate the different communication partners inside the network dynamically in order to reduce the volume of inter-server communication.
 	
 	
 	\subsection{Dynamic Balanced RePartitioning}
-	Avin et al.\cite{Avin2015} initiated the study of the online variant of the Balanced RePartitioning (BRP) problem that is the topic of this thesis. They propose a deterministic algorithm for the Dynamic Balanced Graph Partitioning problem with augmentation $2+\epsilon$ for any $\epsilon>1/k$. They also show a lower bound of $k-1$ for the competitive ratio of any online algorithm for the Dynamic Balanced Graph Partitioning problem on two clusters via a reduction to online paging. Furthermore they show that no $\delta$-augmented deterministic online algorithm can achieve a competitive ratio smaller than $k$ for any augmentation $\delta<l$. %We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. 
+	Avin et al.\cite{Avin2015} initiated the study of the Dynamic Balanced Graph Partitioning (DBGP) problem that is the topic of this thesis. They propose a deterministic algorithm for the DBGP problem with augmentation $2+\epsilon$ for any $\epsilon>1/k$ that takes exponential time. 
+	
+	They also show a lower bound of $k-1$ for the competitive ratio of any online algorithm for the Dynamic Balanced Graph Partitioning problem on two clusters via a reduction to online paging. 
+	
+	Furthermore they show that no $\delta$-augmented deterministic online algorithm can achieve a competitive ratio smaller than $k$ for any augmentation $\delta<l$. %We discovered flaws in their competitive analysis which makes us question their results. These flaws are discussed in greater detail in \cref{flawsSection}. 
 	
 	
 	\subsection{Restricted Variants of Balanced RePartitioning}
@@ -260,14 +268,14 @@
 	
 	Avin, Cohen, Parham and Schmid (\cite{Avin2018}) study one such case: the authors assume that an adversary provides requests according to a fixed distribution of which the optimal algorithm \opt{} has knowledge while an online algorithm that is compared with \opt{} has not. Further they restrict the communication pattern to form a ring-like pattern, i.e. for the case of $n$ nodes $0,...,n-1$ only requests $r$ of the form $r=\{i \mod n, (i+1)\mod n\}$ are allowed. For this case they present a competitive online algorithm which achieves a competitive ratio of $O(\log n)$ with high probability.	
 	
-	Henzinger, Neumann and Schmid (\cite{Henzinger2019}) studies a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.
+	Henzinger, Neumann and Schmid (\cite{Henzinger2019}) study a special \textit{learning variant} of the Dynamic Balanced Graph Partitioning problem specified above. In this version it is assumed that the input sequence $\sigma$ eventually reveals a perfect balanced partitioning of the $n$ nodes into $l$ parts of size $k$ such that the edge cut is zero. In this case the communication patterns reveal connected components of the communication graph of which each forms one of the partitions. Algorithms are tasked to \textit{learn} this partition and to eventually collocate nodes according to the partition while minimizing communication and migration costs.
 	
 	The authors of \cite{Henzinger2019} present an algorithm for the case where the number of servers is $l=2$ that achieves a competitive ratio of $O((\log n)/\epsilon)$ with augmentation $\epsilon$, i.e. each server has capacity $(1+\epsilon)n/2$ for $\epsilon\in(0,1)$.
 	
 	For the general case of $l$ servers of capacity $(1+\epsilon)n/l$ the authors construct an exponential-time algorithm that achieves a competitive ratio of $O((l\log n \log l)/\epsilon)$ for $\epsilon\in(0,1/2)$ and also provide a distributed version.
 	Additionally the authors describe a polynomial-time $O((l^2\log n\log l)/\epsilon^2)$-competitive algorithm for the case with general $l$, servers of capacity $(1+\epsilon)n/l$ and $\epsilon\in(0,1/2)$.
 	
-	It is important to stress that the assumption that the requests reveal a perfect partitioning of the communication nodes is not applicable for most practical applications and thus it is important to study the general BRP problem without restricting $\sigma$.
+	It is important to stress that the assumption that the requests reveal a perfect partitioning of the communication nodes is not applicable for most practical applications and thus it is important to study the general DBGP problem without restricting $\sigma$.
 	
 	
 	\subsection{Clustering}
@@ -280,7 +288,7 @@
 	
 
 	\subsection{Online Paging}
-	In the Online Paging problem (\cite{Fiat2002}, \cite{Epstein2011}) one is given a scenario with a fast cache of $k$ pages and $n-k$ pages in slow memory. In an online manner pages are requested, i.e. without prior knowledge of future requests. If a requested page is in the cache at the time of the request it can be served without cost. If it is in slow memory however, then a \textit{page fault} occurs and the requested page needs to be moved into the cache. If the cache is full then a page from the cache needs to be evicted, i.e. moved to the slow memory in order to make space for the requested one. The goal is to design algorithms which minimize the number of such page faults. 
+	In the Online Paging problem (\cite{Fiat2002}, \cite{Epstein2011}) one is given a scenario with a fast cache of $k$ pages and $n-k$ pages in slow memory. Pages are requested in an online manner, i.e. without prior knowledge of future requests. If a requested page is in the cache at the time of the request it can be served without cost. If it is in slow memory however, then a \textit{page fault} occurs and the requested page needs to be moved into the cache. If the cache is full then a page from the cache needs to be evicted, i.e. moved to the slow memory in order to make space for the requested one. The goal is to design algorithms which minimize the number of such page faults. 
 	
 	The Dynamic Balanced Graph Partitioning problem can be seen as a generalization of Online Paging. In fact, Avin et al. (\cite{Avin2015}) have shown a reduction of Online Paging to this problem.
 	
@@ -288,7 +296,7 @@
 	
 	
 	\subsection{Static Balanced Graph Partitioning}
-	The Static Balanced Graph Partitioning problem is the static offline variant of the topic of this thesis. In this version an algorithm may not perform any migrations, but has perfect knowledge of the request sequence $\sigma$ and then needs to provide a perfectly balanced partitioning of the $n=k\cdot l$ nodes into $l$ sets of equal size $k$. This scenario can be modelled as a graph partitioning problem where the weight of an edge corresponds to the number of requests between its end points in the input sequence $\sigma$. 
+	The Static Balanced Graph Partitioning problem is the static offline variant of the topic of this thesis. In this version an algorithm may not perform any migrations, but has perfect knowledge of the request sequence $\sigma$ and then needs to provide a perfectly balanced partitioning of the $n=k\cdot l$ nodes into $l$ sets of equal size $k$ that minimizes cost, i.e. the weight of edges between the servers. This scenario can be modelled as a graph partitioning problem where the weight of an edge corresponds to the number of requests between its end points in the input sequence $\sigma$. 
 	
 	An algorithm then has to provide a partition of the nodes into sets of exactly $k$ nodes each while minimizing the total edge weights between partitions, i.e. an algorithm needs to minimize the edge cut of the graph.  
 	
@@ -297,7 +305,7 @@
 	
 	\section{Algorithmic Ideas}
 	\label{algIdeas}
-	In this section we describe two different solution approaches to the Dynamic Balanced Graph Partitioning problem. We call these approaches \coreDel{} and \adjDel{} respectively. We first describe this general approach that is common to both algorithms and then address the specific differences and analysis ideas.
+	In this section we describe two different solution approaches to the Dynamic Balanced Graph Partitioning problem. We call these approaches \coreDel{} and \nl\adjDel{} respectively. We first describe this general approach that is common to both algorithms and then address the specific differences and analysis ideas.
 	
 	Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
 	
@@ -307,11 +315,14 @@
 	
 	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but is deleted instead and hence there would be no benefit to a component taking space more than $k$.
 	
-	To this end the algorithms keep track of the reservations for each components. In the pseudocode description we denote the reservation of a component $C$ by $res(C)$ and the current server it is mapped to by $serv(C)$. The free capacity of a server $i$ is denoted by $cap(i)$.
+	To this end the algorithms keep track of the reservations for each component.
 	
 	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
 	
-	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. We also describe the particular challenges each approach entails when it comes to the competitive analysis.
+	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. 
+	In the pseudocode description we denote the reservation of a component $C$ by $res(C)$ and the current server it is mapped to by $serv(C)$. The free capacity of a server $i$ is denoted by $cap(i)$.
+	
+	We also describe the particular challenges each approach entails when it comes to the competitive analysis in their respective subsections.
 	
 	\begin{algorithm}[t]
 		\caption{\crep{}}
@@ -356,7 +367,7 @@
 \end{algorithm}
 	
 	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2016}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
-	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are lemma 4.3 in \cite{Avin2015}, property 3 in \cite{Avin2016} and \cref{cut_lemma} in this thesis.
+	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are Lemma 4.3 in \cite{Avin2015}, Property 3 in \cite{Avin2016} and \cref{cut_lemma} in this thesis.
 	
 	Now we describe the differences in the deletion steps of \coreDel{} and \adjDel{} and present the implications for their respective competitive analysis.
 	
@@ -384,7 +395,7 @@
 	 
 	 The idea of the analysis is then to relate the cost of \coreDel{} with the cost of \opt{} by considering the respective costs due to requests from a deleted component $C$ in the solution of \coreDel{} as these are of high connectivity and are impossible for \opt{} to collocate on one server as each deleted component contains more than $k$ nodes. Then one could sum these costs over all such deleted components in order to bound the costs. For this approach to work however one would have to find a way to cleanly separate requests belonging to one deleted component from those belonging to another in order to establish a lower bound on the cost of \opt{}.
 	 
-	 In this case the edges which are adjacent to a deleted component $C$ remain even after the deletion of $C$ and may then contribute the the creation of a new component $D$. It is now very challenging to attribute any significant cost to \opt{} for these requests.
+	 In this case the edges which are adjacent to a deleted component $C$ remain even after the deletion of $C$ and may then contribute to the creation of a new component $D$. It is now very challenging to attribute any significant cost to \opt{} for these requests.
 	 
 	 \cref{exNewCrep} shows an example sequence of requests for which this approach does not work. The diagram shows horizontal lines, each representing one of the vertices. A vertical line represents a communication request between its end points. For example the sequence shown contains a communication request between nodes 1 and 2 at time $t=5$. Now consider the case where $\alpha=3$ and $k=3$.
 	 
@@ -449,7 +460,7 @@
 	
 	The idea for the analysis is once again to relate the cost of both \opt{} and \adjDel{} to the deleted components in the solution of \adjDel{}.
 	
-	The fact that \adjDel{} also resets adjacent edges means that we can uniquely identify requests with the deleted component whose deletion led to the reset of the corresponding edge weights to zero. This means that we do not have to face the problems we discussed in the section on \coreDel{}. However the question remains whether the deletion of adjacent edges is valid, i.e. whether we can still preserve a good competitive ratio for this approach.
+	The fact that \adjDel{} also resets adjacent edges means that we can uniquely identify requests with the deleted component whose deletion led to the reset of the corresponding edge weights to zero. This means that we do not have to face the problems we discussed in the previous section on \coreDel{}. However the question remains whether the deletion of adjacent edges is valid, i.e. whether we can still preserve a good competitive ratio for this approach.
 	
 	
 		\begin{figure}
@@ -495,6 +506,7 @@
 	
 	\cref{exOldCrep} illustrates an example of this challenge mentioned above for the \adjDel{} approach. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \adjDel{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence.
 	This means that the amount of adjacent edges that are reset may greatly exceed the amount of edges inside a deleted component.
+	
 	We show in our analysis in \cref{analysisSection} that this approach is valid and allows for a competitive ratio of $O(2/\epsilon\cdot k\log k)$.
 		
 	
@@ -517,6 +529,8 @@
 For the sake of this analysis we examine the \adjDel{} algorithm from \cref{algIdeas} and name the algorithm \crep{} from now on.
 
 We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(2/\epsilon\cdot k\log k)$-competitive.
+
+In \cref{run_time_theo} in \cref{run_time_sec} we show that this algorithm can be implemented in polynomial time.
 \label{analysisSection}
 
 \subsection{Algorithm Definitions}
@@ -534,7 +548,7 @@ We begin our analysis by introducing two general definitions that we will use th
 \subsection{Structural Properties}
 
 
-\textbf{Note:} These properties are changed to use the connectivity-based approach which generally simplifies them, but guarantees slightly less minimum edge weight within mergeable component sets.
+These properties are adapted from previous work (\cite{Avin2015, Avin2016}) to use the connectivity-based approach which generally simplifies them, but guarantees slightly less minimum edge weight within mergeable component sets.
 \begin{defi}
 	An $\alpha$\textit{-connected component} is a maximal set of vertices that is $\alpha$-connected.
 \end{defi}
@@ -550,11 +564,11 @@ The following lemma states that there is always at most one mergeable component 
 
 Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a subset $S$ of components with connectivity at least $\alpha$ and $|S|>1$. We may assume that $t$ is the earliest time for which $S$ has connectivity $\alpha$.
 
-Then the incrementation of the weight of edge $e$ at time $t$ raised the connectivity of S, but S was not merged into a new $\alpha$-connected component C. if no new component was created at time $t$ then we arrive at a contradiction as \crep{} always merges if there exists a mergeable component set.
+Then the incrementation of the weight of edge $e$ at time $t$ raised the connectivity of S, but S was not merged into a new $\alpha$-connected component C. If no new component was created at time $t$ then we arrive at a contradiction as \crep{} always merges if there exists a mergeable component set.
 
 Now assume that a component $C$ was created at time t. This means that $C$ must also contain the endpoints of $e$. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S.\qed\nl
 
-The following lemma is adapted for our connectivity-based approach from corollary 4.2 in \cite{Avin2015}.
+The following lemma is adapted for our connectivity-based approach from Corollary 4.2 in \cite{Avin2015}.
 
 \begin{lemma}
 	\label{mergeable_lemma}
@@ -588,12 +602,12 @@ In the following lemma we establish the upper bound on the cut edge weight when 
 	\label{cut_lemma_upper}
 	Given a mergeable set of components $S$ and a partitioning of $S$ into $g\geq2$ parts $S_1,...,S_g$. The weight between the parts $S_i$ is at most $(g-1)\cdot\alpha$ during the execution of \crep{} (in the version \adjDel{}).
 \end{lemma}
-\textit{Proof.} Similarly to before e construct a graph $G=(V,E)$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes and we insert an edge for each edge between the parts $S_i$. Note again that this graph is $\alpha$-connected. We iteratively partition $G$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $G$ which partitions the nodes of $G$ into the subsets $V_1$ and $V_2$ and iteratively partition the resulting sets until all sets contain only one node of $G$ each. As this required at most $|V|-1$ cuts of value at most $\alpha$ and $|V|=g$ by definition the lemma follows.\qed
+\textit{Proof.} Similarly to before e construct a graph $G=(V,E)$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes and we insert an edge for each edge between the parts $S_i$. Note again that this graph is $\alpha$-connected. We iteratively partition $G$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $G$ which partitions the nodes of $G$ into the subsets $V_1$ and $V_2$ and iteratively partition the resulting sets until all sets contain only one node of $G$ each. As this required at most $|V|-1$ cuts of value at most $\alpha$ and $|V|=g$ by definition of $G$ the lemma follows.\qed
 
 
 \subsection{Upper Bound On \crep{}}
 
-We start the analysis of the lower bound of \crep{} by introducing several notions that we will use throughout the analysis.
+We start the analysis of the upper bound of \crep{} by introducing several notions that we will use throughout the analysis.
 
 We define the set $\del(\sigma)$ as the set of components that were deleted by \crep{} during its execution given the input sequence $\sigma$.
 
@@ -655,7 +669,7 @@ We continue our analysis by bounding the migration cost of \crep{} in the follow
 \textit{Proof.} First note that \crep{} only performs migrations when it merges components.
 We fix a component $C\in\del{}(\sigma)\cup \finalComps(\sigma)$ and bound the number of times each node of $C$ is moved as \crep{} processes the requests that led to the creation of $C$. 
 
-As \crep{} only reserves additional space $\lfloor\epsilon\cdot|B|\rfloor$ for components of size at least $2/\epsilon$ for each component $B$ and only moves component $B$ when a merge results in a component of size more than $(1+\epsilon)*|B|$ each node of $C$ is moved at most
+As \crep{} only reserves additional space $\lfloor\epsilon\cdot|B|\rfloor$ for components of size at least $2/\epsilon$ for each component $B$ and only moves component $B$ when a merge results in a component of size more than $(1+\epsilon)\cdot|B|$ each node of $C$ is moved at most
 $(2/\epsilon+1)+\log k$ times. Summing over all nodes in $C$ that were actually moved by \crep{} bounds the number of migrations by $|C|\cdot((2/\epsilon+1) \log k)$ as components get deleted without migrations once they contain more than $k$ nodes. This leads to the desired bound on the migration costs as each node migration incurs cost $\alpha$ to \crep{}.\qed\nl
 
 Finally we summarize our results from \cref{crep_req_bound} and \cref{crep_mig_bound} in the following lemma inorder to obtain the final upper bound on the cost of \crep{}.
@@ -701,7 +715,7 @@ We start by bounding the total edge weight (the total number of requests) we ass
 
 \textit{Proof.} We fix an arbitrary offline interval of node $v$. Observe that none of the nodes involved in the assigned requests are moved by \opt{} during the offline interval, hence all the requests in question involve only nodes that \opt{} has placed on the same server as $v$ during the offline interval. 
 
-The number of such nodes is hence limited by the server capacity $k$. As we only examine requests from $\mathcal{H}$ we know that none of these requests have led \crep{} to perform any merges, hence there were at most $\alpha$ requests between $v$ and any one of the other nodes on its server. This bounds the number of requests assigned to the offline interval by $k\cdot\alpha$.\qed\nl
+The number of such nodes is hence limited by the server capacity $k$. As we only examine requests from $\mathcal{H}$ we know that none of these requests have led \crep{} to perform any merges, hence there were at most $\alpha$ requests between $v$ and any one of the other nodes on its server during the offline interval. This bounds the number of requests assigned to the offline interval by $k\cdot\alpha$.\qed\nl
 
 In the following lemma we combine this result with a bound on the cost of \opt{} due to requests we have not accounted for, namely those from $\core(C)$ and those that are not contained in an offline interval because they get deleted by \crep{} due to a component deletion that takes place before their offline interval ends.
 
@@ -716,17 +730,17 @@ In the following lemma we combine this result with a bound on the cost of \opt{}
 
 \textit{Proof.} Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
 
-For the following part of the proof we fix an arbitrary component $C\in\del{}(\sigma)$. Let $R$ denote the set of requests from $\halo(C)$ that were not assigned to any offline interval. This means that the nodes involved in requests from $R$ were not moved during the processing of requests from $R$ until the time of deletion of $C$.
+For the following part of the proof we fix an arbitrary component $C\in\del{}(\sigma)$. Let $R(C)$ denote the set of requests from $\halo(C)$ that were not assigned to any offline interval. This means that the nodes involved in requests from $R(C)$ were not moved during the processing of requests from $R(C)$ until the time of deletion of $C$.
 
-The number of nodes contained in $C$ or connected to $C$ via edges representing requests from $R$ is at least $|C|+R/\alpha$ since requests from $R$ have not led \crep{} to perform any migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R/\alpha}{k}$ different servers. As \opt{} does not pay for any requests from $R$ it follows that \opt{} must have placed the nodes from $C$ in $\frac{|C|+R/\alpha}{k}$ different servers.
+The number of nodes contained in $C$ or connected to $C$ via edges representing requests from $R$ is at least $|C|+R(C)/\alpha$ since requests from $R(C)$ have not led \crep{} to perform any migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R(C)/\alpha}{k}$ different servers. As \opt{} does not pay for any requests from $R$ it follows that \opt{} must have placed the nodes from $C$ in $\frac{|C|+R(C)/\alpha}{k}$ different servers.
 
-We first examine the case in which \opt{} does not move any nodes from $C$ during $\epoch(C)$. In this case \opt{} must partition a graph containing the nodes from $C$ which are connected via edges representing the requests from $\core(C)$into migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R/\alpha}{k}$ parts. As \crep{} merged component $C$ this graph is $\alpha$-connected and hence \cref{cut_lemma} gives that \opt{} has to cut at least edges of total weight migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R/k$.
+We first examine the case in which \opt{} does not move any nodes from $C$ during $\epoch(C)$. In this case \opt{} must partition a graph containing the nodes from $C$ which are connected via edges representing the requests from $\core(C)$. This means that \opt{} must have placed those nodes on at least $\frac{|C|+R(C)/\alpha}{k}$ parts. As \crep{} merged component $C$ this graph is $\alpha$-connected and hence \cref{cut_lemma} gives that \opt{} has to cut at least edges of total weight $\frac{|C|+R(C)/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R(C)/k$.
 
 For the more general case in which \opt{} may perform node migrations during $\epoch(C)$ we adapt the graph construction from above as follows: we add a vertex representing each (node, time) pair from $\epoch(C)$.
 We connect each (node, time) pair $p$ with edges of weight $\alpha$ to the pairs of the same node that represent the time step directly before and directly after $p$ (if they exist in the graph). These edges represent the fact that \opt{} may choose to migrate a node between any two time steps in $\epoch(C)$.
 Additionally we add an edge of weight one for each request $r=\{u,v\}$ from $\core(C)$ by connecting the nodes in the graph that represent the pairs $(u,t)$ and $(v,t)$, respectively. \opt{} once again has to partition this graph into $\frac{|C|+R/\alpha}{k}$ parts.
 
-Note that we only added edges of weight $\alpha$ to the graph and hence this graph is also $\alpha$-connected. We conclude that once again \opt{} has to cut edges of weight at least $\frac{|C|+R/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R/k$.
+Note that we only added edges of weight $\alpha$ to the graph and hence this graph is also $\alpha$-connected. We conclude that once again \opt{} has to cut edges of weight at least $\frac{|C|+R(C)/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R(C)/k$.
 
 Finally we need to account for the fact that the migrations of nodes from $C$ that \opt{} performs also end offline intervals and might hence be accounted for twice in our analysis up to this point:
 
@@ -734,15 +748,18 @@ Finally we need to account for the fact that the migrations of nodes from $C$ th
 	\addtolength{\jot}{1em}
 
 	\begin{align*}
-		2\cdot\opt(\sigma)&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+R(C)/k+I/(k\cdot\alpha)\cdot\alpha+|P|+|OP|\\
+		2\cdot\opt(\sigma)&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+R(C)/k+I/(k\cdot\alpha)\cdot\alpha+|P|\\
 		&\geq\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k
 	\end{align*}
 \endgroup
 
 where the last equality follows from the fact that 
 %TODO think about whether this is actually true, likely P is missing here 
-$\bigcup_{C\in\del(\sigma)}R(C)\cup I\cup P\cup OP=\bigcup_{C\in\del(\sigma)}\halo(C)$ as the different $R(C)$ as well as $I, P$ and $OP$ are disjoint.
-Hence the cost of \opt{} is at least $1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k$ as \opt{} pays for requests from $P$ by the definition of $P$.\qed
+$\bigcup_{C\in\del(\sigma)}R(C)\cup I\cup P=\bigcup_{C\in\del(\sigma)}\halo(C)$ as the different $R(C)$ as well as $I$ and $P$ are disjoint.
+Hence the cost of \opt{} is at least
+\begin{align*}
+	1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k.
+\end{align*}\qed
 
 
 \subsection{Competitive Ratio}
@@ -775,8 +792,8 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 \frac{\crep{}(\sigma)}{\opt(\sigma)}\leq O(2/\epsilon\cdot k \log k) +\beta'.
 \end{align*}
 
-To obtain the bound on $\beta$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta\leq l\cdot k \cdot
-((2/\epsilon+1)+\log k)\cdot\alpha+k\cdot l\cdot \alpha\in O(k \log k)$.\qed\nl
+To obtain the bound on $\beta'$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta'\leq l\cdot k \cdot
+((2/\epsilon+1)+\log k)\cdot\alpha+k\cdot l\cdot \alpha\in O(2/\epsilon\cdot k \log k)$.\qed\nl
 
 So far we have shown that \crep{} is competitive. In \cref{run_time_sec} we will show that our version \adjDel{} of \crep{} can be implemented in polynomial time.
 
@@ -791,15 +808,16 @@ We first describe the ideas behind our implementation of \crep{} and then illust
 
 In this section we describe our implementation of \crep{} with augmentation $2+\epsilon$ in greater detail.
 
-In order to limit the section of the graph $G$ maintained by \crep{} that needs to be updated upon a new request between nodes of different components we maintain a decomposition tree defined as follows: the root represents the whole graph and is assigned the connectivity of the whole graph. Given a node $v$ in the tree that represents a (sub-)graph $G'$ of $G$, we decompose $G'$ into sub-graphs whose connectivity is strictly larger than that of $G'$ and add children to $v$ for each such sub-graph. We do not decompose sub-graphs of connectivity at least $\alpha$ any further as we only need to identify whether a new sub-graph of connectivity at least $\alpha$ was created by the insertion of the most recent request.
+In order to limit the section of the graph $G$ maintained by \crep{} that needs to be updated upon a new request between nodes of different components we maintain a decomposition tree defined as follows: the root represents the whole graph and is assigned the connectivity of the whole graph. Given a node $v$ in the tree that represents a subgraph $G'$ of $G$, we decompose $G'$ into subgraphs whose connectivity is strictly larger than that of $G'$ and add children to $v$ for each such subgraph. We do not decompose sub-graphs of connectivity at least $\alpha$ any further as we only need to identify whether a new subgraph of connectivity at least $\alpha$ was created by the insertion of the most recent request.
+Additionally we keep track of the connectivity of each such subgraph.
 
 \cref{ex_decomp_tree} illustrates this decomposition for the graph shown in \cref{ex_graph}. In the decomposition tree we have labelled each node with the corresponding subset of vertices and the connectivity of the graph induced by these vertices.
 
-If a new request is revealed to \crep{} then we only need to update the smallest subtree of the decomposition tree which still contains both end points of the request. For example in the case of a new request between 0 and 1 we only need to recompute the decomposition of the sub-graph induced by the vertex set $\{0,1,2\}$. 
+If a new request is revealed to \crep{} then we only need to update the smallest subtree of the decomposition tree which still contains both end points of the request. For example in the case of a new request between 0 and 1 we only need to recompute the decomposition of the sub-graph induced by the vertex set $\{0,1,2\}$ in the example. 
 
-This is correct because we can view each decomposition of a sub-graph $G'$ into smaller graphs of a higher connectivity as a set of cuts that separates the nodes of $G'$. Inserting a new edge within $G'$ may only increase the value of the cuts which result in the decomposition of $G'$, but do not affect cuts separating $G'$ from other sub-graphs.
+This is correct because we can view each decomposition of a subgraph $G'$ into smaller graphs of a higher connectivity as a set of cuts that separates the nodes of $G'$. Inserting a new edge within a subgraph $G'$ may only increase the value of the cuts which result in the decomposition of $G'$, but do not affect cuts separating $G'$ itself from other subgraphs.
 
-If such a new request led to the creation of a new component this means that two old components that were at least $\alpha$-connected were merged and hence the number of leaves in the decomposition tree decreased. If this is the case then the algorithm checks whether the new component contains more than $k$ nodes. If this is the case then the component is deleted and split into singleton components, each containing one node from the deleted component.
+If a new request led to the creation of a new component this means that two old components that were at least $\alpha$-connected were merged and hence the number of leaves in the decomposition tree decreased. If this is the case then the algorithm checks whether the new component contains more than $k$ nodes. If this is the case then the component is deleted and split into singleton components, each containing one node from the deleted component.
 
 Upon such a component deletion the edges inside of and adjacent to the component are deleted, i.e. their weight is reset to zero. This means that the decomposition tree needs to be recomputed in order to reflect this change.
 
@@ -936,11 +954,11 @@ In the case of a collocation the nodes are moved to a cluster that has enough sp
 
 \subsection{On the Decomposition of a Subgraph}
 \label{decomp_desc}
-In this section we describe our algorithm for the decomposition of a given subgraph represented by a node in the decomposition tree. Specifically we describe the general idea behind our implementation of the subroutine \textit{decompose(treeNode, c)} which we have based on the algorithm described by Chang et al. (\cite{Chang2013}). In this algorithm $c$ denotes the connectivity that is to be the basisi of this decomposition step.
+In this section we describe our algorithm for the decomposition of a given subgraph represented by a node in the decomposition tree. Specifically we describe the general idea behind our implementation of the subroutine \textit{decompose(treeNode, c)} which we have based on the algorithm described by Chang et al. (\cite{Chang2013}). In this algorithm $c$ denotes the connectivity that is to be the basis of this decomposition step.
 
 Given a node $v$ of the decomposition tree, first a \textit{partition graph} is constructed which is a graph consisting of the nodes in the subgraph represented by $v$ and the edges which are between the nodes of the subgraph. This partition graph also supports merges and cuts of its nodes. More specifically the partition graph is initialized as a graph $P=(V,E)$ with $V=nodes(v)$ and $E=\{e=\{u,w\}\in E'|u\in nodes(v)\text{ and }w\in nodes(v)\}$ where $E'$ represents the set of edges in the graph maintained by \crep{}. Additionally we maintain a mapping $M$ which assigns each node from $V$ a set of the nodes in the subgraph represented by the decomposition tree node $v$. Initially M assigns each node in $V$ the subset containing only the node itself.
 
-We now run a \textit{maximum adjacency search} algorithm, sometimes also called \textit{maximum cardinality search} algorithm, (\cite{Stoer1997}) in order to obtain a minimum $(s,t)$-cut of the graph.
+We now run a \textit{maximum adjacency search} algorithm, sometimes also called \textit{maximum cardinality search} algorithm, (\cite{Stoer1997}) in order to obtain an arbitrary minimum $(s,t)$-cut of the graph.
 
 The maximum adjacency search algorithm is defined as follows: We start with an empty list $L$ to which we add an arbitrary node of $P$. We then continually add the most tightly connected node from $V$ to L, i.e. the node which is connected to the nodes in $L$ via edges of the most total weight. Stoer and Wagner (\cite{Stoer1997}) have shown that the edges between the last two nodes $s$ and $t$ added to $L$ form a minimum $(s,t)$-cut.
 
@@ -951,7 +969,9 @@ Here the separation of the nodes $s$ and $t$ means that we remove all edges in t
 In the case of a merge we combine the nodes s and t and merge the outgoing edges, i.e. we replace the set of nodes $V$ of $P$ by the set $V'=V\backslash\{s,t\}\cup\{v'\}$. The edges $E$ of $P$ are modified by removing all edges adjacent to $s$ and $t$ and adding an edge $e'=\{v',u\}$ of weight $w(\{s,u\})+w(\{t,u\})$ where $w(e)$ denotes the weight of edge $e$ if it exists and is equal to zero otherwise.
 Furthermore we adjust the mapping $M$ by setting $M(v')=M(s)\cup M(t)$.
 
-We continually run this algorithm until $P$ contains no edges, i.e. until $E=\emptyset$. The sets of nodes mapped to each ot the nodes of $P$ by $M$ now represent candidate subgraphs for the decomposition. Note though that we have only cut according to minimum $(s,t)$-cuts and not according to minimum cuts. This means that the specific sequence in which we have performed the cuts may influence the result. This can be remedied by repeating the procedure on the resulting subgraphs until it returns a subgraph of only one node. This is due to the fact that Chang et al. (\cite{Chang2013}) have shown that this procedure always cuts a subgraph of connectivity less than $c$ at least once (see Cutability Property in \cite{Chang2013}).
+We continually run this algorithm until $P$ contains no edges, i.e. until $E=\emptyset$. The sets of nodes mapped to each ot the nodes of $P$ by $M$ now represent candidate subgraphs for the decomposition. Note though that we have only cut and merged according to minimum $(s,t)$-cuts and not according to minimum cuts. This means that the specific sequence in which we have performed the cuts may influence the result, e.g. if we merged based on a minimum $(s,t)$-cut which is not a minimum cut.
+
+This can be remedied by repeating the procedure on the resulting subgraphs until it returns a subgraph of only one node, i.e. until no separation step is performed during the decomposition. This is due to the fact that Chang et al. (\cite{Chang2013}) have shown that this procedure always cuts a subgraph of connectivity less than $c$ at least once (see Cutability Property in \cite{Chang2013}).
 
 In order to speed up this computation we use the heap data structure proposed and analyzed by Chang et al. (\cite{Chang2013}).
 
@@ -960,7 +980,7 @@ Thus we conclude that this procedure correctly decomposes a given subgraph as Ch
 
 \subsection{Running Time}
 \label{run_time_sec}
-In this section we discuss polynomial the running time of an update of the decomposition tree after a new request has been received in our implementation of \adjDel{}.
+In this section we discuss the polynomial running time of an update of the decomposition tree after a new request has been received in our implementation of \adjDel{}.
 
 \cref{run_time_theo} summarizes our result on the corresponding running time. 
 
@@ -969,12 +989,14 @@ In this section we discuss polynomial the running time of an update of the decom
 	The deterministic algorithm \adjDel{} can be implemented in polynomial time $O(\alpha|V|^2|E|)$.
 \end{theo}
 
-\textit{Proof.} The worst case is in this case given when the whole tree has to be recomputed. We first discuss the time complexity of decomposing a single tree node $v$. Let the corresponding subgraph be denoted by $G_v=(V_v, E_v)$.
-Since each iteration of the subroutine \textit{decompose} performs at least one cut as long as the connectivity of the given graph is smaller than the current threshold $c$ we conclude that after at most $|V_v|$ iterations of decompose a correct decomposition is found. Each step of \textit{decompose } can be performed in $O(|V_v|\cdot|E_v|)$ a maximum adjacency search finds an arbitrary minimum $(s,t)$-cut in time $O(|E_v|)$ as shown in theorem 4.1 in \cite{Chang2013} and as there are at most $|V_v|$ minimum $(s,t)$-cuts computed for each invocation of \textit{decompose}.
+\textit{Proof.} The worst case is given when the whole tree has to be recomputed. We first discuss the time complexity of decomposing a single tree node $v$. Let the corresponding subgraph be denoted by $G_v=(V_v, E_v)$.
+Since each iteration of the subroutine \textit{decompose} performs at least one cut as long as the connectivity of the given graph is smaller than the current threshold $c$ we conclude that after at most $|V_v|$ iterations of decompose a correct decomposition is found. 
+
+Each step of \textit{decompose} can be performed in $O(|V_v|\cdot|E_v|)$ as the maximum adjacency search algorithm finds an arbitrary minimum $(s,t)$-cut in time $O(|E_v|)$ as shown in theorem 4.1 in \cite{Chang2013} and as there are at most $|V_v|$ minimum $(s,t)$-cuts computed for each invocation of \textit{decompose}.
 
 Hence the complexity of decomposing the subgraph represented by a tree node $v$ is in $O(|V_v|^2|E_v|)$. Let $C_v$ denote the time needed for the decomposition of the subgraph represented  by decomposition tree node $v$.
 
-We now sum this complexity over the nodes for each connectivity level of the decomposition tree. To this end let level(i) denote all nodes in the decomposition tree which are of connectivity exactly i.
+We now sum this complexity over the nodes for each connectivity level of the decomposition tree. To this end let $level(i)$ denote all nodes in the decomposition tree which are of connectivity exactly $i$.
 
 \begin{align*}
 	\sum_{i=0}^{\alpha}\sum_{v\in \text{level}(i)}C_v\leq\sum_{i=0}^{\alpha}O(|V|^2|E|)\in O(\alpha|V|^2|E|).
@@ -993,9 +1015,11 @@ We first present the algorithms we compare in order to evaluate our results.
 
 We consider both algorithmic approaches based on maintaining a second-order partition of the nodes into components we discussed in \cref{algIdeas}, i.e. \adjDel{} where on a component deletion all edges inside of and adjacent of the component are deleted and \coreDel{} which only deletes internal edges. Both algorithms start with randomly initialized mappings of nodes to servers.
 
+We have shown the competitive ratio of \adjDel{} in \cref{comp_ratio_theo} and its polynomial running time in the previous section.
+
 We compare these algorithms both with the static graph partitioning algorithm METIS\_PartGraphRecursive implemented in the METIS framework (\cite{Karypis1998, Karypis1998a}) which we will refer to from now on as \static{} and the adaptive/dynamic algorithm \nl{ParMETIS\_V3\_AdaptiveRepart} (\cite{Karypis1999, Schloegel1997, Schloegel2000}) available in the ParMetis framework, referred to as \adapt{}. Both frameworks are known to produce very good results and to be very fast.
 
-We run \adapt{} in an online way while maintaining a communication graph by inserting an edge or incrementing a corresponding edge weight for each request.
+We run \adapt{} in an online manner while maintaining a communication graph by inserting an edge or incrementing a corresponding edge weight for each request, i.e. \adapt{} is called after each request is inserted into the graph.
 
 For \static{} we first record the communication graph and give it as input to \static{}. We then compute the cost of \static{} due to migrations from the random initial mapping of nodes to servers and due to remote requests, i.e. the total weight of edges between nodes of the communication graph which \static{} mapped to different servers.
 
@@ -1004,7 +1028,7 @@ For \static{} we first record the communication graph and give it as input to \s
 
 As input data we use several HPC traces (\dbALong{}, \dbBLong{}, \dbCLong{}), the nature of the data is described in more detail by Avin, Ghobadi, Griner and Schmid in \cite{Avin2019}. For the sake of readability we use abbreviations NB for NeckBone and MG for MultiGrid.
 
-All data sets contain 1024 different communication nodes and are limited to the first 300 000 requests. The value of $\alpha$ is set to be 6 and the algorithm was tasked to partition the nodes into 32 clusters of size 32 each, i.e. $k=l=32$. The dynamic algorithms are allowed to use augmentation with a factor of $2.1$, i.e. for the dynamic algorithms the maximum cluster capacities are $\lfloor32\cdot2.1\rfloor=67$.
+All data sets contain 1024 different communication nodes and are limited to the first 300 000 requests. The value of $\alpha$ is set to 6 and the algorithm was tasked to partition the nodes into 32 clusters of size 32 each, i.e. $k=l=32$. The dynamic algorithms are allowed to use augmentation with a factor of $2.1$, i.e. for the dynamic algorithms the maximum cluster capacities are $\lfloor32\cdot2.1\rfloor=67$.
 
 \begin{comment}
 
@@ -1072,7 +1096,7 @@ We now discuss the differences of the two algorithms in terms of communication a
 
 Finally \cref{runTimePlotCrep} compares the running times of both algorithms. One can see that \adjDel{} performs drastically better than \coreDel{} in this regard. This may be due to the fact that \adjDel{} deletes edges more frequently and thus needs to take less edges into account when updating the decomposition tree.
 
-Also note that both algorithms pay significantly more for migrations than for communication. This suggests that there may be room for fine-tuning these algorithms in order achieve a more balanced distribution of the cost. One such adjustment is investigated in the next section, namely whether we can improve the results by changing the algorithms in such a way that they only merge once a connectivity of $2\cdot\alpha$ is reached.
+Also note that both algorithms pay generally more for migrations than for communication. This suggests that there may be room for fine-tuning these algorithms in order achieve a more balanced distribution of the cost. One such adjustment is investigated in the next section, namely whether we can improve the results by changing the algorithms in such a way that they only merge once a connectivity of $2\cdot\alpha$ is reached.
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -1233,16 +1257,18 @@ Also note that both algorithms pay significantly more for migrations than for co
 	\caption{comparison of running time of \adjDel{} and \coreDel{}}\label{runTimePlotCrep}
 \end{figure}
 
-\subsection{On the Influence of $\alpha$}
+\subsection{On the Influence of the Connectivity Threshold}
 \label{alphaInf}
 
-In the previous section we observed that both \coreDel{} and \adjDel{} have higher migration cost than communication cost. This leads to the questions whether we can find adjustments that allow us to achieve a better balance of the different costs. In this section we investigate the influence of $\alpha$ on the quality of the solution. Namely we discuss the results of both algorithms for the case where they only merge components once a connectivity of at least $2\cdot\alpha$ is reached. Note that this only affects the analysis by constant factors, namely the statements from \cref{cut_lemma} and \cref{cut_lemma_upper} are multiplied by a factor of two.
+In the previous section we observed that both \coreDel{} and \adjDel{} have higher migration cost than communication cost. This leads to the question whether we can find adjustments that allow us to achieve a better balance of the different costs. In this section we investigate the influence of the connectivity threshold which determines when components are merged. Up until this point it was set to $\alpha$. As we show there lies potential in adjusting this threshold in order to improve the quality of the solution. 
+
+Namely we discuss the results of both algorithms for the case where they only merge components once a connectivity of at least $2\cdot\alpha$ is reached. Note that this only affects the analysis by constant factors, namely the statements from \cref{cut_lemma} and \cref{cut_lemma_upper} are multiplied by a factor of two. This may only impact the other cost bounds by a factor of two which leaves our bound on the competitive ratio of \adjDel{} unaffected.
 
 \cref{costPlotCrepTwoAlpha} shows the total cost of \adjDel{} and \coreDel{} for this scenario. One can see that the cost of both algorithms is reduced, but \coreDel{} has improved significantly more than \adjDel{}.
 
-When looking at the distribution of this cost to communication and migration costs one can see that now the communication costs of both algorithms is higher than the migration cost in all cases. For \coreDel{} this has improved the balance of both costs, but \adjDel{} now has significantly higher communication cost than migration cost. This suggests that by adjusting the exact value of connectivity at which these algorithms perform their merges one might be able to further improve the quality of the results. It may even be possible to adjust this and parameter dynamically based on some data gathered as requests are processed.
+When looking at the distribution of this cost to communication and migration costs one can see that now the communication costs of both algorithms is higher than the migration cost in all cases. For \coreDel{} this has improved the balance of both costs, but \adjDel{} now has significantly higher communication cost than migration cost. This suggests that by adjusting the exact value of connectivity at which these algorithms perform their merges one might be able to further improve the quality of the results. It may even be possible to adjust this parameter dynamically based on some data gathered as requests are processed.
 
-These improvements come at a cost of running time as \cref{runTimePlotCrep2A} shows, almost doubling the times of the previous results in some cases. Especially the already worse run times of \coreDel{} are drastically increased.
+These improvements come at a cost of running time as \cref{runTimePlotCrep2A} shows, almost doubling or tripling the times of the previous results in some cases. Especially the already worse run times of \coreDel{} are drastically increased.
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -1627,16 +1653,18 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	\caption{comparison of running time of \adapt{} and \static{}}\label{runTimePlotMetis}
 \end{figure}
 
-\cref{costPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(2/\epsilon\cdot k\log k)$.
+\cref{costPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results of \adjDel{} and \coreDel{} presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. 
+
+We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(2/\epsilon\cdot k\log k)$.
 
 Finally \cref{runTimePlotMetis} illustrates the run times of \adapt{} and \static{}. Note that static is only run once on the communication graph after all requests have been revealed which means that it is expected for \static{} to have the fastest running time. But also \adapt{} achieves faster running times than our dynamic implementations.
 
-
+%\clearpage
 
 \section{Conclusion}
-We have discussed different ideas for component-based algorithms for the Dynamic Balanced Graph Partitioning Problem. 
+We have discussed different ideas for component-based algorithms for the Dynamic Balanced Graph Partitioning Problem as well as the corresponding implications and challenges for the competitive analysis. 
 
-We have shown that our algorithm \adjDel{} has a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and we have presented our decomposition based approach to its implementation. 
+We have shown that our algorithm \adjDel{} has a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and we have presented our decomposition-based approach to its implementation. 
 
 Finally we have evaluated the results of our implementation by comparing it with three other algorithms: \coreDel{} which is a variation of \adjDel{} which deletes fewer edges and \adapt{} and \static{} which are available via METIS and ParMETIS frameworks, respectively. Furthermore we have explored the possibility of making slight adaptations of our algorithms in order to improve their results.
 
@@ -1644,6 +1672,8 @@ Finally we have evaluated the results of our implementation by comparing it with
 Even though we have already shown very promising results as to the overall performance of our algorithms together with theoretical guarantees there are still areas in which our work could be expanded upon.
 
 As discussed in \cref{alphaInf} we see great potential in making adjustments to our algorithms, especially \coreDel{}, in order to improve their results even further while also preserving our result on the competitive ratio.
+
+Such adjustments may be achieved for example by changing certain algorithm parameters such as the connectivity threshold
 
 There may also be potential in adapting and improving our decomposition tree data structure in order to improve running times.
 
