@@ -706,10 +706,13 @@ We assign a request $r$ involving the node $v$ to an offline interval of $v$ if 
 
 The requests from $\mathcal{H}=\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that are not assigned to any offline interval are then those which are deleted due to the deletion of a component that took place before the corresponding offline interval ended.
 
+Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
+
 We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from $\mathcal{H}$ which \crep{} pays for but \opt{} does not. We denote the requests in question by $N$, i.e. those from $N=\mathcal{H}\backslash P$. Note that $\mathcal{H}$ only contains requests which \crep{} payed for due to the definition of $\halo(C)$.
 
 
 \begin{lemma}
+	\label{offl_int_lemma}
 	We assign at most $k\cdot\alpha$ requests from $N$ to any one offline interval.
 \end{lemma}
 
@@ -717,7 +720,38 @@ We start by bounding the total edge weight (the total number of requests) we ass
 
 The number of such nodes is hence limited by the server capacity $k$. As we only examine requests from $\mathcal{H}$ we know that none of these requests have led \crep{} to perform any merges, hence there were at most $\alpha$ requests between $v$ and any one of the other nodes on its server during the offline interval. This bounds the number of requests assigned to the offline interval by $k\cdot\alpha$.\qed\nl
 
-In the following lemma we combine this result with a bound on the cost of \opt{} due to requests we have not accounted for, namely those from $\core(C)$ and those that are not contained in an offline interval because they get deleted by \crep{} due to a component deletion that takes place before their offline interval ends.
+Let $R(C)$ denote the set of requests from $\halo(C)$ that were not assigned to any offline interval for a deleted component $C\in\del(\sigma)$.
+
+We continue the analysis of the lower bound on \opt{} by bounding the cost of \opt{} due to requests we have not accounted for, namely those from $\core(C)$ and those from $R(C)$ for each deleted component $C$.
+
+\begin{lemma}
+	\label{core_r_lemma}
+	Consider only the requests of sequence $\sigma$ which are contained in $core(C)\cup R(C)$ for a deleted component $C\in\del(\sigma)$. Then \opt{} pays at least
+	\begin{align*}
+		\sum_{C\in\del(\sigma)}|C|/k\cdot\alpha+R(C)/k
+	\end{align*}
+	in the course of serving these requests.%this subsequence $\sigma'$ of $\sigma$.	
+\end{lemma}
+
+\textit{Proof.} For the following part of the proof we fix an arbitrary component $C\in\del{}(\sigma)$. Note that the nodes involved in requests from $R(C)$ were not moved by \opt{} during the processing of requests from $R(C)$ until the time of deletion of $C$ as otherwise they would be assigned to an offline interval.
+
+The number of nodes contained in $C$ or connected to $C$ via edges representing requests from $R$ is at least $|C|+R(C)/\alpha$ since requests from $R(C)$ have not led \crep{} to perform any migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+R(C)/\alpha}{k}$ different servers. As \opt{} does not pay for any requests from $R$ it follows that \opt{} must have placed the nodes from $C$ in $\frac{|C|+R(C)/\alpha}{k}$ different servers.
+
+We first examine the case in which \opt{} does not move any nodes from $C$ during $\epoch(C)$. In this case \opt{} must partition a graph containing the nodes from $C$ which are connected via edges representing the requests from $\core(C)$. As stated earlier \opt{} placed those nodes in $\frac{|C|+R(C)/\alpha}{k}$ different servers at time $\tau(C)$. As \crep{} merged component $C$ this graph is $\alpha$-connected and hence \cref{cut_lemma} gives that \opt{} has to cut at least edges of total weight $\frac{|C|+R(C)/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R(C)/k$.
+
+For the more general case in which \opt{} may perform node migrations during $\epoch(C)$ we adapt the graph construction from above as follows: we add a vertex representing each (node, time) pair from $\epoch(C)$.
+We connect each (node, time) pair $p$ with edges of weight $\alpha$ to the pairs of the same node that represent the time step directly before and directly after $p$ (if they exist in the graph). These edges represent the fact that \opt{} may choose to migrate a node between any two time steps in $\epoch(C)$.
+Additionally we add an edge of weight one for each request $r=\{u,v\}$ from $\core(C)$ by connecting the nodes in the graph that represent the pairs $(u,t)$ and $(v,t)$, respectively. \opt{} once again has to partition this graph into $\frac{|C|+R/\alpha}{k}$ parts.
+
+Note that we only added edges of weight $\alpha$ to the graph and hence this graph is also $\alpha$-connected. We conclude that once again \opt{} has to cut edges of weight at least $\frac{|C|+R(C)/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+R(C)/k$.
+
+As the sets $core(C)$, $R(C)$ , $core(D)$ and $R(D)$ are disjoint per their definition we conclude that \opt{} has to pay at least cost 
+\begin{align*}
+\sum_{C\in\del(\sigma)}|C|/k\cdot\alpha+R(C)/k.
+\end{align*}
+\qed\nl
+
+In the following lemma we combine the results of the previous lemmas in order to bound the cost of \opt{}.
 
 
 \begin{lemma}
@@ -728,7 +762,15 @@ In the following lemma we combine this result with a bound on the cost of \opt{}
 	\end{align*}
 \end{lemma}
 
-\textit{Proof.} Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
+\textit{Proof.} We combine the results from \cref{offl_int_lemma} and \cref{core_r_lemma}. Note that the cost from \cref{core_r_lemma} may contain migration costs. In this case the corresponding migrations represent the end of an offline interval. This gives us that
+
+\begin{align*}
+2\opt{}(\sigma)\geq\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k.
+\end{align*}
+as we account for each migration at most twice. Hence the lemma follows.\qed
+
+\begin{comment}
+Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
 
 For the following part of the proof we fix an arbitrary component $C\in\del{}(\sigma)$. Let $R(C)$ denote the set of requests from $\halo(C)$ that were not assigned to any offline interval. This means that the nodes involved in requests from $R(C)$ were not moved during the processing of requests from $R(C)$ until the time of deletion of $C$.
 
@@ -760,6 +802,7 @@ Hence the cost of \opt{} is at least
 \begin{align*}
 	1/2\cdot\sum_{(C\in\del{}(\sigma)}|C|/k\cdot\alpha+\halo(C)/k.
 \end{align*}\qed
+\end{comment}
 
 
 \subsection{Competitive Ratio}
