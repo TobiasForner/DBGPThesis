@@ -781,9 +781,11 @@ To obtain the bound on $\beta$ we observe that the components in $\finalComps(\s
 So far we have shown that \crep{} is competitive. In \cref{run_time_sec} we will show that our version \adjDel{} of \crep{} can be implemented in polynomial time.
 
 
-\section{Efficient Implementation Details}
+\section{From Algorithmic Ideas to Polynomial Time Implementation}
 \label{implDetSection}
-In this section we first describe the ideas behind our implementation of \crep{} and then illustrate them by discussing pseudocode of the implemented algorithm.
+So far we have only shown that the algorithm \adjDel{} described in \cref{algIdeas} is competitive with competitive ratio $O(2/\epsilon\cdot k \log k)$. In this section we discuss the implementation and running time and conclude in \cref{run_time_theo} in \cref{run_time_sec} that it is indeed polynomial.
+
+We first describe the ideas behind our implementation of \crep{} and then illustrate them by discussing pseudocode of the implemented algorithm.
 
 \subsection{Algorithm Explanations}
 
@@ -958,9 +960,16 @@ Thus we conclude that this procedure correctly decomposes a given subgraph as Ch
 
 \subsection{Running Time}
 \label{run_time_sec}
-In this section we discuss the running time of an update of the decomposition tree after a new request has been received. The worst case is in this case given when the whole tree has to be recomputed.
+In this section we discuss polynomial the running time of an update of the decomposition tree after a new request has been received in our implementation of \adjDel{}.
 
-We first discuss the time complexity of decomposing a single tree node $v$. Let the corresponding subgraph be denoted by $G_v=(V_v, E_v)$.
+\cref{run_time_theo} summarizes our result on the corresponding running time. 
+
+\begin{theo}
+	\label{run_time_theo}
+	The deterministic algorithm \adjDel{} can be implemented in polynomial time $O(\alpha|V|^2|E|)$.
+\end{theo}
+
+\textit{Proof.} The worst case is in this case given when the whole tree has to be recomputed. We first discuss the time complexity of decomposing a single tree node $v$. Let the corresponding subgraph be denoted by $G_v=(V_v, E_v)$.
 Since each iteration of the subroutine \textit{decompose} performs at least one cut as long as the connectivity of the given graph is smaller than the current threshold $c$ we conclude that after at most $|V_v|$ iterations of decompose a correct decomposition is found. Each step of \textit{decompose } can be performed in $O(|V_v|\cdot|E_v|)$ a maximum adjacency search finds an arbitrary minimum $(s,t)$-cut in time $O(|E_v|)$ as shown in theorem 4.1 in \cite{Chang2013} and as there are at most $|V_v|$ minimum $(s,t)$-cuts computed for each invocation of \textit{decompose}.
 
 Hence the complexity of decomposing the subgraph represented by a tree node $v$ is in $O(|V_v|^2|E_v|)$. Let $C_v$ denote the time needed for the decomposition of the subgraph represented  by decomposition tree node $v$.
@@ -971,7 +980,8 @@ We now sum this complexity over the nodes for each connectivity level of the dec
 	\sum_{i=0}^{\alpha}\sum_{v\in \text{level}(i)}C_v\leq\sum_{i=0}^{\alpha}O(|V|^2|E|)\in O(\alpha|V|^2|E|).
 \end{align*}
 
-We conclude our analysis of the time complexity by observing the polynomial-time complexity of $O(\alpha|V|^2|E|)$ we have just shown.
+We conclude our analysis of the time complexity by observing the polynomial-time complexity of $O(\alpha|V|^2|E|)$.
+
 
 
 \section{Evaluation}
