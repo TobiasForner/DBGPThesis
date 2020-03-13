@@ -90,6 +90,10 @@
 	
 	\thispagestyle{empty}
 	\begin{abstract}
+		This thesis studies the Dynamic Balanced Graph Partitioning problem, an online graph partitioning variant. The task is to maintain a mapping of communication nodes to servers while requests are revealed according to an unknown pattern. As the requests appear they need to be served, either remotely between nodes on different servers at cost one or locally within a server at cost zero. Before a request has to be served there is an option to change the mapping of nodes to servers, i.e. to migrate at cost $\alpha$ per node move.
+		
+		We provide a polynomial-time deterministic algorithm for this problem which achieves a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and evaluate its results and performance by comparing it with the results of another algorithm variant and with existing implementations.
+		
 		\ldots
 	\end{abstract}
 	
@@ -180,11 +184,26 @@
 
 	\section{Introduction}
 	
+	With the continually increasing importance of distributed and cloud computation it is also of great importance to minimize the communication overhead due to the increased network load. One method for achieving such improvements is to relocate communication partners (e.g. virtual machines) that communicate/interact frequently on the same servers. This way expensive and slow inter-server communication can be minimized by handling this communication within a server, without generating network load.
+	
+	As communication patterns may change over time it seems especially promising to develop algorithms which adapt this distribution over time, i.e. in a dynamic fashion.
+	
+	The Dynamic Balanced Graph Partitioning (DBGP) problem (\cite{Avin2015, Avin2016}) which we study in this thesis provides a suitable model for these situations. Here algorithms are tasked to provide a mapping of communication nodes (virtual machines) to servers of fixed equal size and to dynamically adapt this mapping as new communication requests are revealed in an online manner, i.e. without prior knowledge of future requests. The goal is then to provide algorithms that maintain such a mapping while minimizing communication and migration costs.
+	
+	In our model a communication request can be served remotely, i.e. between nodes mapped to different servers at cost one or locally if both nodes are located on the same server at no cost. Before the cost for the current request is payed an algorithm has the option to migrate nodes at a cost of $\alpha$ for each node move.
+	
+	This problem has a variety of interesting challenges and properties:
+	\begin{itemize}
+		\item \textbf{Buy or Rent}(\cite{Epstein2014}): should a request be served remotely at a small cost (rent) or should the communicating nodes be collocated at a large cost up-front(buy)?
+		\item \textbf{How should nodes be collocated?} If there are nodes which communicate frequently it seems advantageous to collocate them. Then the question is how one could define such a threshold and also which node should be moved in order to migrate as little as possible.
+		\item \textbf{Should nodes be evicted?} If nodes are to be collocated there might not be enough space left in a suitable target server. In this case it needs to be decided which other nodes should be evicted from the target server.
+	\end{itemize}
+	
 	
 	
 	\section{Contributions}
 	
-	We study the Dynamic Balanced Graph Partitioning problem and show a competitive ratio of $O(2/\epsilon k\log k)$ for our component-based deterministic algorithm \crep{} in the variant \adjDel{} which runs in polynomial time. We also discuss challenges in the competitive analysis of this algorithm and of another algorithm, \coreDel, for which we have not shown a competitive ratio. Both approaches are adaptations of prior work (\cite{Avin2015, Avin2016}).
+	We study the Dynamic Balanced Graph Partitioning problem and show a competitive ratio of $O(2/\epsilon\cdot k\log k)$ for our component-based deterministic algorithm \crep{} in the variant \adjDel{} which runs in polynomial time. We also discuss challenges in the competitive analysis of this algorithm and of another algorithm, \coreDel, for which we have not shown a competitive ratio. Both approaches are adaptations of prior work (\cite{Avin2015, Avin2016}).
 	
 	We discuss the details of our implementation which uses a decomposition tree data structure in order to reduce the update times when recomputing the components upon receiving new requests.
 	
@@ -198,9 +217,11 @@
 	
 	Given a graph $G=(V,E,w)$ we define an (edge) cut of $G$ as a pair of two disjoint subsets $X,Y$ of $V$ such that $X\cup Y=V$. The value of this cut is then the sum of the weight of edges between nodes from $X$ and $Y$, i.e. $\sum_{e=\{u,v\}\in E:u\in X, v\in Y}w(e)$ is the value of the cut $(X,Y)$. Note that such a cut can also be defined by the set of the edges connecting $X$ and $Y$ that are cut. We call a cut a \textit{minimum (edge) cut} of $G$ if it is one of the cuts with minimum value.
 	
-	We use this definition a minimum cut to introduce the notion of \textit{connectivity}. The connectivity of a graph $G$ is equal to the value of a minimum edge cut of $G$. This definition will be used in order to define the communication components our algorithm maintains as these are subsets of $V$ who induce subgraphs of high connectivity. We explain the concept of components in greater detail in \cref{algIdeas}.
+	We use this definition of a minimum cut to introduce the notion of \textit{connectivity}. The connectivity of a graph $G$ is equal to the value of a minimum edge cut of $G$. This definition will be used in order to define the communication components our algorithm maintains as these are subsets of $V$ who induce subgraphs of high connectivity. We explain the concept of components in greater detail in \cref{algIdeas}.
 	
 	Furthermore we define the term $(s,t)$\textit{-cut} a cut $(X,Y)$ for which $s\in X$ and $Y\in X$, i.e. a $(s,t)$-cut separates the nodes $s$ and $t$ in $G$. Then a \textit{minimum} $(s,t)$-cut is a $(s,t)$-cut of minimum value. Note that a minimum $(s,t)$-cut is not necessarily a minimum cut.
+	
+	Finally we call an injective function $m:X\rightarrow Y$ a mapping of $X$ to $Y$. We use this terminology for example when we talk about the assignment of nodes to servers.
 	
 	
 	\section{Problem Definition}
@@ -253,6 +274,8 @@
 	
 	Clustering is the process of generating subsets of elements with high similarity (\cite{Hartuv2000}). Desirable properties are \textit{homogeneity}, i.e. high similarity within elements of a cluster and that the similarity is low between elements of different clusters, a property called \textit{separation}. Hartuv and Shamir (\cite{Hartuv2000}) approach this problem by constructing a similarity graph and then separating the nodes via repeated computations of minimum edge cuts. This approach is quite similar to the one we use in order to determine sub-graphs of high connectivity of the communication graph induced by the requests.
 	
+	Clustering has also been studied with a variety of other different contexts and approaches from data mining to image segmentation (\cite{Benabdellah2019, Wu1993, Pavana}).
+	
 	However we consider an online problem, i.e. algorithms need to react dynamically to changes in the graph and need to maintain their data structures and adapt accordingly whereas clustering considers complete data sets which are static.
 	
 
@@ -265,9 +288,11 @@
 	
 	
 	\subsection{Static Balanced Graph Partitioning}
-	The Static Balanced Graph Partitioning problem is the static offline variant of the topic of this thesis. In this version an algorithm may not perform any migrations, but has perfect knowledge of the request sequence $\sigma$ and then needs to provide a perfectly balanced partitioning of the $n=k\cdot l$ nodes into $l$ sets of equal size $k$. This scenario can be modelled as a graph partitioning problem where the weight of an edge corresponds to the number of requests between its end points in the input sequence $\sigma$. An algorithm then has to provide a partition of the nodes into sets of exactly $k$ nodes each while minimizing the total edge weights between partitions, i.e. an algorithm needs to minimize the edge cut of the graph. 
+	The Static Balanced Graph Partitioning problem is the static offline variant of the topic of this thesis. In this version an algorithm may not perform any migrations, but has perfect knowledge of the request sequence $\sigma$ and then needs to provide a perfectly balanced partitioning of the $n=k\cdot l$ nodes into $l$ sets of equal size $k$. This scenario can be modelled as a graph partitioning problem where the weight of an edge corresponds to the number of requests between its end points in the input sequence $\sigma$. 
 	
-	For the case where $l\geq 3$, Andreev and R\"acke have shown that there is no polynomial time approximation algorithm which guarantees a finite approximation factor unless P=NP (\cite{Andreev2006}).
+	An algorithm then has to provide a partition of the nodes into sets of exactly $k$ nodes each while minimizing the total edge weights between partitions, i.e. an algorithm needs to minimize the edge cut of the graph.  
+	
+	This problem is NP-complete (\cite{Andreev2006}) and for the case where $l\geq 3$, Andreev and R\"acke (\cite{Andreev2006}) have shown that there is no polynomial time approximation algorithm which guarantees a finite approximation factor unless P=NP .
 	
 	
 	\section{Algorithmic Ideas}
@@ -470,7 +495,7 @@
 	
 	\cref{exOldCrep} illustrates an example of this challenge mentioned above for the \adjDel{} approach. In the illustration it is assumed that $\alpha=3$ and $k=3$. In this case the input sequence leads \adjDel{} to first merge nodes 1 and 2 at time $t=3$ and then to add node 3 to the resulting component at time $t= 6$. The next two requests do not quite lead to the merge of the node 4 with the component. Instead a series of requests follows where node 1 communicates with other nodes that are outside of its component without any merges. Note that this sequence can be extended until node $1$ has communicated with every node except from the nodes $1,2,3,4$. Finally the first 4 nodes are merged at time $t=15$ at which point the resulting component is deleted as well as \textit{all} edges in the sequence.
 	This means that the amount of adjacent edges that are reset may greatly exceed the amount of edges inside a deleted component.
-	We show in our analysis in \cref{analysisSection} that this approach is valid and allows for a competitive ratio of $O(2/\epsilon k\log k)$.
+	We show in our analysis in \cref{analysisSection} that this approach is valid and allows for a competitive ratio of $O(2/\epsilon\cdot k\log k)$.
 		
 	
 	%\section{Problems With Analysis in Previous Work}
@@ -491,7 +516,7 @@
 \section{Analysis}
 For the sake of this analysis we examine the \adjDel{} algorithm from \cref{algIdeas} and name the algorithm \crep{} from now on.
 
-We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(2/\epsilon k\log k)$-competitive.
+We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(2/\epsilon\cdot k\log k)$-competitive.
 \label{analysisSection}
 
 \subsection{Algorithm Definitions}
@@ -725,7 +750,7 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 
 \begin{theo}
 	\label{comp_ratio_theo}
-	With augmentation $(2+\epsilon)$ the competitive ratio of \crep{} is in $O(2/\epsilon k \log k)$.
+	With augmentation $(2+\epsilon)$ the competitive ratio of \crep{} is in $O(2/\epsilon\cdot k \log k)$.
 \end{theo}
 
 \textit{Proof.} We arbitrarily fix an input sequence $\sigma$ and use our previous results to bound the competitive ratio of \crep{}. We define $\comps(\sigma):=\del{}(\sigma)\cup\finalComps(\sigma)$ in order to improve readability. Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for.
@@ -735,7 +760,7 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 &\frac{\crep{}(\sigma)-\finalWeights(\sigma)}{\opt(\sigma)}\\ 
 &\leq\frac{2\cdot\sum_{C\in\comps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\cdot\alpha +\sum_{C\in\del{}(\sigma)} |\halo(C)|}{1/2\cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k +|P|}\\
 &\leq k \log k\frac{2\cdot\sum_{C\in\del(\sigma)}|C|\cdot(2/\epsilon+1) \cdot\alpha+\sum_{C\in\del{}(\sigma)}|\halo(C)|}{1/2\sum_{(C\in\del{}(\sigma)}|C|\cdot\alpha/2+|\halo(C)|)}+\beta\\
-& = O(2/\epsilon k \log k) +\beta
+& = O(2/\epsilon\cdot k \log k) +\beta
 \end{align*}
 \endgroup
 
@@ -747,7 +772,7 @@ In this section we combine the results of \cref{crep_upper_bound} and \cref{opt_
 \noindent Let $\beta'=\beta+\finalWeights(\sigma)$. Then it follows that
 
 \begin{align*}
-\frac{\crep{}(\sigma)}{\opt(\sigma)}\leq O(k \log k) +\beta'.
+\frac{\crep{}(\sigma)}{\opt(\sigma)}\leq O(2/\epsilon\cdot k \log k) +\beta'.
 \end{align*}
 
 To obtain the bound on $\beta$ we observe that the components in $\finalComps(\sigma)$ each are of size at most $k$ since they were not deleted by \crep{}. This allows us to derive to bound $\sum_{C\in \finalComps(\sigma)}|C|\cdot((2/\epsilon+1)+\log k)\leq l \cdot k \cdot ((2/\epsilon+1)+\log k)$. Since at the end of the execution of \crep{} there can be at most $k\cdot l$ components, \cref{cut_lemma_upper} allows us to bound $\finalWeights(\sigma)$ by $k\cdot l \cdot\alpha$. Hence we conclude that $\beta\leq l\cdot k \cdot
@@ -956,9 +981,13 @@ In this section we evaluate the quality of the results and the performance of ou
 \label{algSection}
 We first present the algorithms we compare in order to evaluate our results.
 
-We consider both algorithmic approaches based on maintaining a second-order partition of the nodes into components we discussed in \cref{algIdeas}, i.e. \adjDel{} where on a component deletion all edges inside of and adjacent of the component are deleted and \coreDel{} which only deletes internal edges.
+We consider both algorithmic approaches based on maintaining a second-order partition of the nodes into components we discussed in \cref{algIdeas}, i.e. \adjDel{} where on a component deletion all edges inside of and adjacent of the component are deleted and \coreDel{} which only deletes internal edges. Both algorithms start with randomly initialized mappings of nodes to servers.
 
 We compare these algorithms both with the static graph partitioning algorithm METIS\_PartGraphRecursive implemented in the METIS framework (\cite{Karypis1998, Karypis1998a}) which we will refer to from now on as \static{} and the adaptive/dynamic algorithm \nl{ParMETIS\_V3\_AdaptiveRepart} (\cite{Karypis1999, Schloegel1997, Schloegel2000}) available in the ParMetis framework, referred to as \adapt{}. Both frameworks are known to produce very good results and to be very fast.
+
+We run \adapt{} in an online way while maintaining a communication graph by inserting an edge or incrementing a corresponding edge weight for each request.
+
+For \static{} we first record the communication graph and give it as input to \static{}. We then compute the cost of \static{} due to migrations from the random initial mapping of nodes to servers and due to remote requests, i.e. the total weight of edges between nodes of the communication graph which \static{} mapped to different servers.
 
 \subsection{Input Data}
 \label{inputDesc}
@@ -1588,7 +1617,7 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	\caption{comparison of running time of \adapt{} and \static{}}\label{runTimePlotMetis}
 \end{figure}
 
-\cref{costPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(2/\epsilon k\log k)$.
+\cref{costPlotMetis} shows the total cost of the solutions of \adapt{} and \static{}. One can see that \static{} is able to produce results that far surpass \adapt{}. In fact the results of \static{} are also a significant improvement over the results presented before. But it is also important to note that \static{} is only useful in scenarios where the communication patterns and frequencies stay mostly the same over time. Otherwise the approach to record the communication graph and then use \static{} in order to compute a partitioning may lead to consistent results. We stress that the implementations of \static{} and \adapt{} rely on heuristics only and do not provide any guarantees while we have shown that our algorithm \adjDel{} is a competitive algorithm with competitive ratio $O(2/\epsilon\cdot k\log k)$.
 
 Finally \cref{runTimePlotMetis} illustrates the run times of \adapt{} and \static{}. Note that static is only run once on the communication graph after all requests have been revealed which means that it is expected for \static{} to have the fastest running time. But also \adapt{} achieves faster running times than our dynamic implementations.
 
@@ -1597,7 +1626,7 @@ Finally \cref{runTimePlotMetis} illustrates the run times of \adapt{} and \stati
 \section{Conclusion}
 We have discussed different ideas for component-based algorithms for the Dynamic Balanced Graph Partitioning Problem. 
 
-We have shown that our algorithm \adjDel{} has a competitive ratio of $O(2/\epsilon k\log k)$ and we have presented our decomposition based approach to its implementation. 
+We have shown that our algorithm \adjDel{} has a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and we have presented our decomposition based approach to its implementation. 
 
 Finally we have evaluated the results of our implementation by comparing it with three other algorithms: \coreDel{} which is a variation of \adjDel{} which deletes fewer edges and \adapt{} and \static{} which are available via METIS and ParMETIS frameworks, respectively. Furthermore we have explored the possibility of making slight adaptations of our algorithms in order to improve their results.
 
