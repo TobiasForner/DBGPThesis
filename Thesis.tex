@@ -1,4 +1,4 @@
-\documentclass[a4paper,xcolor=dvipsnames, tikz, 12pt]{article}
+\documentclass[a4paper, 12pt]{article}
 %\documentclass{beamer}
 \usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry} % page settings
 \usepackage{amsmath} % provides many mathematical environments & tools
@@ -87,7 +87,7 @@
 \begin{document}
 	
 	%title page
-	%\input{title/title_page}	
+	\input{title/title_page}	
 	
 	\thispagestyle{empty}
 	\begin{abstract}
@@ -95,7 +95,7 @@
 		
 		We discuss different algorithmic approaches and we discuss the respective implications for the competitive analysis.
 		
-		Furthermore we provide a polynomial-time deterministic algorithm for this problem which achieves a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and evaluate its results and performance by comparing it with the results of another algorithm variant and with existing implementations.
+		Our main contribution is a  polynomial-time deterministic algorithm for this problem which achieves a competitive ratio of $O(2/\epsilon\cdot k\log k)$. We analyze and empirically evaluate this algorithm, also by comparison with another algorithm variant and with existing implementations.
 	\end{abstract}
 	
 	\clearpage
@@ -193,7 +193,7 @@
 	
 	In our model a communication request can be served remotely, i.e. between nodes mapped to different servers, at cost one or locally if both nodes are located on the same server at no cost. Before the cost for the current request is payed an algorithm has the option to migrate nodes at a cost of $\alpha$ for each node move.
 	
-	This problem has a variety of interesting challenges and properties:
+	This problem has a variety of interesting challenges and properties(\cite{Avin2016}):
 	\begin{itemize}
 		\item \textbf{Rent or buy}(\cite{Epstein2014}): should a request be served remotely at a small cost (rent) or should the communicating nodes be collocated at a large cost up-front(buy)?
 		\item \textbf{How should nodes be collocated?} If there are nodes which communicate frequently it seems advantageous to collocate them. Then the question is how to define such a threshold and also which nodes should be moved in order to migrate as little as possible.
@@ -202,13 +202,17 @@
 	
 	
 	
-	\section{Contributions}
+	\subsection{Contributions}
 	
-	We study the Dynamic Balanced Graph Partitioning problem and show a competitive ratio of $O(2/\epsilon\cdot k\log k)$ for our component-based deterministic algorithm \crep{} in the variant \adjDel{} which runs in polynomial time. We also discuss challenges in the competitive analysis of this algorithm and of another algorithm, \coreDel, for which we have not shown a competitive ratio. Both approaches are adaptations of prior work (\cite{Avin2015, Avin2016}).
+	We study the Dynamic Balanced Graph Partitioning problem and show a competitive ratio of $O(2/\epsilon\cdot k\log k)$ for our component-based deterministic algorithm \crep{} in the variant \adjDel{} which runs in polynomial time. We also discuss challenges in the competitive analysis of this algorithm and of another algorithm, \coreDel, for which we have not shown a competitive ratio. Both approaches are adaptations of prior work (\cite{Avin2015, Avin2016}). Previous algorithms had super-polynomial running time.
+	
+	Our connectivity-based approach to the definition of components allows to achieve a polynomial running time.
 	
 	We discuss the details of our implementation which uses a decomposition tree data structure in order to reduce the update times when recomputing the components upon receiving new requests.
 	
 	We evaluate our implementation and compare it with \coreDel{} that is also based on components, but for which we have not shown a competitive ratio. Furthermore we compare it with two existing implementations in the METIS and ParMETIS framework and we explore first ideas of adjusting parameters to improve the results of the presented algorithms even further.
+	
+	\subsection{Organization}
 	
 	\section{General Definitions and Notation}
 	
@@ -218,7 +222,7 @@
 	
 	Given a graph $G=(V,E,w)$ we define an (edge) cut of $G$ as a pair of two disjoint subsets $X,Y$ of $V$ such that $X\cup Y=V$. The value of this cut is then the sum of the weight of edges between nodes from $X$ and $Y$, i.e. $\sum_{e=\{u,v\}\in E:u\in X, v\in Y}w(e)$ is the value of the cut $(X,Y)$. Note that such a cut can also be defined by the set of the edges connecting $X$ and $Y$ that are cut. We call a cut a \textit{minimum (edge) cut} of $G$ if it is one of the cuts with minimum value.
 	
-	We use this definition of a minimum cut to introduce the notion of \textit{connectivity}. The connectivity of a graph $G$ is equal to the value of a minimum edge cut of $G$. This definition will be used in order to define the communication components our algorithm maintains as these are subsets of $V$ who induce subgraphs of high connectivity. We explain the concept of components in greater detail in \cref{algIdeas}.
+	We use this definition of a minimum cut to introduce the notion of \textit{connectivity}. The connectivity of a graph $G$ is equal to the value of a minimum edge cut of $G$. This definition will be used in order to define the communication components our algorithm maintains as these are subsets of $V$ which induce subgraphs of high connectivity. We explain the concept of components in greater detail in \cref{algIdeas}.
 	
 	Furthermore we define the term $(s,t)$\textit{-cut} as a cut $(X,Y)$ for which $s\in X$ and $Y\in X$, i.e. a $(s,t)$-cut separates the nodes $s$ and $t$ in $G$. Then a \textit{minimum} $(s,t)$-cut is a $(s,t)$-cut of minimum value. Note that a minimum $(s,t)$-cut is not necessarily a minimum cut.
 	
@@ -227,7 +231,7 @@
 	
 	\section{Problem Definition}
 	
-	Avin, Bienkowski, Loukas, Pacut and Schmid (\cite{Avin2016}) first introduced the Dynamic Balanced Graph Partitioning problem under the name of \textit{Balanced RePartitioning} (BRP) problem, but changed the name to the former in a more recent version of their paper (\cite{Avin2015}).
+	Avin et al. (\cite{Avin2016}) first introduced the Dynamic Balanced Graph Partitioning problem under the name of \textit{Balanced RePartitioning} (BRP) problem, but changed the name to the former in a more recent version of their paper (\cite{Avin2015}).
 	
 	The task is to maintain a partitioning of a dynamic graph consisting of $n=k\cdot l$ nodes that communicate with each other into $l$ parts, each of size $k$ while minimizing both the cost due to communication and due to node migrations defined as follows. 
 	
@@ -245,7 +249,7 @@
 	\end{align*} 
 	where $\onl{}(\sigma)$ and $\opt{}(\sigma)$ denote the cost of serving input sequence $\sigma$ of \onl{} and \opt{} respectively.
 	
-	Often we allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\cdot n/k$ nodes to each server where $\delta>1$. This augmented online algorithm is than compared with the optimal offline algorithm \opt{} which is not allowed to use any augmentation.
+	We allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\cdot n/k$ nodes to each server where $\delta>1$. This augmented online algorithm is than compared with the optimal offline algorithm \opt{} which is not allowed to use any augmentation.
 	
 	\section{Related Work}
 	
@@ -301,12 +305,14 @@
 	
 	An algorithm then has to provide a partition of the nodes into sets of exactly $k$ nodes each while minimizing the total edge weights between partitions, i.e. an algorithm needs to minimize the edge cut of the graph.  
 	
-	This problem is NP-complete (\cite{Andreev2006}) and for the case where $l\geq 3$, Andreev and R\"acke (\cite{Andreev2006}) have shown that there is no polynomial time approximation algorithm which guarantees a finite approximation factor unless P=NP .
+	This problem is NP-complete (\cite{Andreev2006}) and for the case where $l\geq 3$, Andreev and R\"acke (\cite{Andreev2006}) have shown that there is no polynomial time approximation algorithm which guarantees a finite approximation factor unless P=NP.
+	
+	\subsection{Fast Algorithms and Heuristics}
 	
 	
 	\section{Algorithmic Ideas}
 	\label{algIdeas}
-	In this section we describe two different solution approaches to the Dynamic Balanced Graph Partitioning problem. We call these approaches \coreDel{} and \nl\adjDel{} respectively. We first describe this general approach that is common to both algorithms and then address the specific differences and analysis ideas.
+	In this section we describe two different solution approaches to the Dynamic Balanced Graph Partitioning problem. We call these approaches \coreDel{} and \nl\adjDel{} that are inspired by the versions of the \crep{} algorithm in \cite{Avin2015} and \cite{Avin2016}. We first describe the general approach that is common to both algorithms and then address the specific differences and analysis ideas.
 	
 	Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
 	
@@ -314,11 +320,11 @@
 	
 	Both algorithms merge a set $S$ of components into a new component $C$ if the connectivity of the component graph induced by the components in $S$ is at least $\alpha$. After each edge insertion the algorithm checks whether there exists a new component set $S$ with $|S|>1$ which fulfils this requirement.
 	
-	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. If the resulting component has size at least $2/\epsilon$ the algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$, otherwise the reservation is zero. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but is deleted instead and hence there would be no benefit to a component taking space more than $k$.
+	If after any request and the insertion of the resulting edge the algorithm discovers a new subset $S$ of nodes whose induced subgraph has connectivity at least $\alpha$ and which is of cardinality at most $k$ it merges the components that form this set into one new component and collocates all the nodes in the resulting set on a single server. The algorithm reserves additional space $\min\{\lfloor\epsilon\cdot|C|\rfloor,k-|C|\}$ for each component on the server it is currently located on. Note that the additional reservation may be zero for components smaller than $1/\epsilon$. This reservation guarantees that nodes are not migrated too often for the analysis to work. Note that this also limits the total space a component can use to a maximum of $k$. This makes sense as a component whose size exceeds $k$ is never merged but is deleted instead and hence there would be no benefit to a component taking space more than $k$.
 	
 	To this end the algorithms keep track of the reservations for each component.
 	
-	The collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$ due to the allowed augmentation of $2+\epsilon$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
+	Both algorithms use augmentation $2+\epsilon$ in order to guarantee that the collocation of such component sets of at most $k$ individual communication nodes is always possible without moving a node not in $C$. This guarantees by an averaging argument that there is almost at least one cluster with capacity at least $k$ which a newly merged component can be moved to.
 	
 	If the subset has cardinality greater than $k$ the resulting component is deleted. The definition of this deletion process is the main differentiating factor between our algorithms which we discuss in the following subsections. The common part of both algorithms is also summarized in the form of pseudocode in \cref{highLevelAlg}. Please note that the subroutine \textit{delete(Y)} of a component set $Y$ is different for each of the algorithms. 
 	In the pseudocode description we denote the reservation of a component $C$ by $res(C)$ and the current server it is mapped to by $serv(C)$. The free capacity of a server $i$ is denoted by $cap(i)$.
@@ -356,7 +362,7 @@
 		\STATE $cap(serv(C))\gets cap(serv(C))+res(C)$		
 		\ENDFOR
 		\STATE $N\gets collocate(X)$ //moves all components from $X$ to the same server as described
-		\STATE //N contains the newly created component
+		\STATE //$N$ contains the newly created component
 		\IF {$|N|>2/\epsilon$}
 		\STATE //reserve additional space
 		\STATE $res(N)\gets\min\{\lfloor\epsilon\cdot|N|\rfloor,k-|N|\}$
@@ -367,8 +373,12 @@
 	\end{algorithmic}
 \end{algorithm}
 	
-	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2016}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while the approaches by the other authors do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
+	These approaches are fairly similar to the algorithms defined in previous work (\cite{Avin2015}, \cite{Avin2016}). The main differentiating factor is that we merge once a component set reaches connectivity $\alpha$ while prior approaches do so once the component set reaches a certain density threshold. More specifically they merge a component set $S$ once it fulfills $w(S)\geq(|S|-1)\cdot\alpha$ where $w(S)$ denotes the cumulative weight of the edges between nodes contained in the components of $S$.
 	The similarities are especially apparent when comparing the respective lemmas and properties that are used in order to bound the weight between partitions of mergeable component sets. These are Lemma 4.3 in \cite{Avin2015}, Property 3 in \cite{Avin2016} and \cref{cut_lemma} in this thesis.
+	
+	Our connectivity-based approach however allows us to achieve a a polynomial runtime.
+	
+	
 	
 	Now we describe the differences in the deletion steps of \coreDel{} and \adjDel{} and present the implications for their respective competitive analysis.
 	
@@ -526,7 +536,7 @@
 	
 	
 
-\section{Analysis}
+\section{Competitive Analysis of \adjDel{}}
 For the sake of this analysis we examine the \adjDel{} algorithm from \cref{algIdeas} and name the algorithm \crep{} from now on.
 
 We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(2/\epsilon\cdot k\log k)$-competitive.
@@ -558,16 +568,16 @@ The following lemma states that there is always at most one mergeable component 
 
 \begin{lemma}
 	\label{mergeableLemma}
-	At any time $t$ after \crep{} performed its merge and delete actions all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges.
+	At any time $t$ after \crep{} performed its merge and delete actions, all subsets $S$ of components with $|S|>1$ have connectivity less than $\alpha$, i.e. there exist no mergeable component sets after \crep{} performed its merges and deletions.
 \end{lemma}
 
 \textit{Proof.} We prove the lemma by an induction on steps. The lemma holds trivially at time 0.
 
 Now assume that at some time $t>0$ the lemma does not hold, i.e. there is a subset $S$ of components with connectivity at least $\alpha$ and $|S|>1$. We may assume that $t$ is the earliest time for which $S$ has connectivity $\alpha$.
 
-Then the incrementation of the weight of edge $e$ at time $t$ raised the connectivity of S, but S was not merged into a new $\alpha$-connected component C. If no new component was created at time $t$ then we arrive at a contradiction as \crep{} always merges if there exists a mergeable component set.
+Then the incrementation of the weight of edge $e$ at time $t$ raised the connectivity of $S$, but $S$ was not merged into a new $\alpha$-connected component $C$. If no new component was created at time $t$ then we arrive at a contradiction as \crep{} always merges if there exists a mergeable component set.
 
-Now assume that a component $C$ was created at time t. This means that $C$ must also contain the endpoints of $e$. But then the conjunction of C and S forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of C and S.\qed\nl
+Now assume that a component $C$ was created at time $t$. This means that $C$ must also contain the endpoints of $e$. But then the conjunction of $C$ and $S$ forms an even larger subset of components with connectivity at least $\alpha$ which is a contradiction to the maximality of $C$ and $S$.\qed\nl
 
 The following lemma is adapted for our connectivity-based approach from Corollary 4.2 in \cite{Avin2015}.
 
@@ -576,7 +586,7 @@ The following lemma is adapted for our connectivity-based approach from Corollar
 	Fix any time t and consider weights right after they were updated by \crep{} but before any merge or delete actions. Then all subsets $S$ of components with $|S|>1$ have connectivity at most $\alpha$ and a mergeable component set S has connectivity exactly $\alpha$.
 \end{lemma}
 
-\textit{Proof.} This lemma follows directly from \cref{mergeableLemma} as connectivities can only increase by at most 1 at each time t and \cref{mergeableLemma} guarantees that mergeable component sets are merged by \crep{} directly after they emerge, before a new request is revealed.\qed\nl
+\textit{Proof.} This lemma follows directly from \cref{mergeableLemma} as connectivities can only increase by at most 1 at each time $t$ and \cref{mergeableLemma} guarantees that mergeable component sets are merged by \crep{} directly after they emerge, before a new request is revealed.\qed\nl
 
 The following two lemmas combined give us a result similar to Lemma 4.3 in \cite{Avin2015}: bounds on the edge weight that is cut when partitioning a mergeable component set, i.e. a set of components of connectivity at least $\alpha$.
 
@@ -584,7 +594,7 @@ We start by establishing a lower bound on this edge weight in the following lemm
 
 \begin{lemma}
 	\label{cut_lemma}
-	Given a mergeable set of components S and a partition of $S$ into $g>1$ parts $S_1,...,S_g$. Then the weight between the parts of the partition is at least $g/2 \cdot alpha$.
+	Given a mergeable set of components S and a partition of $S$ into $g>1$ parts $S_1,...,S_g$. Then the weight between the parts of the partition is at least $g/2 \cdot \alpha$.
 \end{lemma}
 \textit{Proof.} We construct a graph $G$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes. Note that this graph is $\alpha$-connected. We insert an edge for each edge between the parts $S_i$. Now consider the sum of the weighted degrees of all such nodes $S_i$ in the constructed graph:
 \begin{align*}
@@ -603,16 +613,20 @@ In the following lemma we establish the upper bound on the cut edge weight when 
 	\label{cut_lemma_upper}
 	Given a mergeable set of components $S$ and a partitioning of $S$ into $g\geq2$ parts $S_1,...,S_g$. The weight between the parts $S_i$ is at most $(g-1)\cdot\alpha$ during the execution of \crep{} (in the version \adjDel{}).
 \end{lemma}
-\textit{Proof.} Similarly to before e construct a graph $G=(V,E)$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes and we insert an edge for each edge between the parts $S_i$. Note again that this graph is $\alpha$-connected. We iteratively partition $G$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $G$ which partitions the nodes of $G$ into the subsets $V_1$ and $V_2$ and iteratively partition the resulting sets until all sets contain only one node of $G$ each. As this required at most $|V|-1$ cuts of value at most $\alpha$ and $|V|=g$ by definition of $G$ the lemma follows.\qed
+\textit{Proof.} Similarly to before ee construct a graph $G=(V,E)$ with the different parts $S_i, i\in\{1,...,g\}$ of the partition as nodes and we insert an edge for each edge between the parts $S_i$. Note again that this graph is $\alpha$-connected. We iteratively partition $G$ into subsets via minimum cuts with regard to edge weight, i.e. we consider a minimum edge cut of $G$ which partitions the nodes of $G$ into the subsets $V_1$ and $V_2$ and iteratively partition the resulting sets until all sets contain only one node of $G$ each. As this required at most $|V|-1$ cuts of value at most $\alpha$ and $|V|=g$ by definition of $G$ the lemma follows.\qed
+
+\subsection{Proof Overview}
+
+Now that we have defined some general notions and some fundamental properties we give an overview over the general approach we use in order to achieve an upper bound on \adjDel{}, a lower bound on \opt{} and finally the competitive ratio of \adjDel{}.
 
 
-\subsection{Upper Bound On \crep{}}
+\subsection{Upper Bound On \adjDel{}}
 
 We start the analysis of the upper bound of \crep{} by introducing several notions that we will use throughout the analysis.
 
 We define the set $\del(\sigma)$ as the set of components that were deleted by \crep{} during its execution given the input sequence $\sigma$.
 
-We define the following notions for a component $C\in\del{}(\sigma)$, i.e. the subgraph induced by the nodes of $C$ has connectivity at least $\alpha$ and $C$ consists of more than $k$ nodes:
+We define the following notions for a deleted component $C\in\del{}(\sigma)$.
 
 Let $\epoch{}(C)$ denote the (node, time) pairs of nodes in $C$ starting at the time after the time $\tau(node)$ when $node$ was last turned into a singleton component, i.e. 
 \begin{align*}
@@ -627,8 +641,9 @@ We split the requests from $\req{}(C)$ into two sets: $\core(C)$ contains all re
 \begin{align*}
 \core(C)=\{r=\{u,v\}\in\sigma| (u,\reqTime(r))\in \epoch(C)\text{ and } (v, \reqTime(r))\in \epoch(C)\}.
 \end{align*}
-These are the requests that led to the creation of component $C$. 
-$\halo(C)$ contains all requests from $\req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $\halo(C)=\req(C)\backslash \core(C)$.
+These are the requests that led to the creation of component $C$ by increasing the connectivity within the corresponding subgraph.
+ 
+We define $\halo(C)$ as the set of all requests from $\req(C)$ for which exactly one end point was associated with $C$ at the time of the request. Note that this means that $\halo(C)=\req(C)\backslash \core(C)$.
 
 These definitions allow us to differentiate between the highly-connected sub-graph induced by the nodes of $C$ which are connected by requests from $\core(C)$ and the edges leaving $C$ from $\halo(C)$ which are relatively less dense as \crep{} has not merged any outer node with the component.
 
@@ -807,7 +822,7 @@ In the following lemma we combine the results of the previous lemmas in order to
 \end{align*}
 as we account for each migration at most twice.
 
-Consider that due to \cref{offl_int_lemma} we have the inequality $o\geq|N|/k$. Also note that $\mathcal{H}=N\uplus P$. Hence we obtain
+Consider that due to \cref{offl_int_lemma} we have the inequality $o\geq|N|/k$. We repeat that $\mathcal{H}=\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$. Note that $N$ is the subset of requests of $\mathcal{H}$ for which \opt{} does not pay while $P$ is the subset of $\mathcal{H}$ \opt{} pays for. It follows that the disjoint union of $N$ and $P$ is $\mathcal{H}$. Hence we obtain
 
 \begin{align*}
 2\opt{}(\sigma)&\geq\sum_{C\in\del(\sigma)}\optmig(C)+\optreq(C)+ o\cdot\alpha+|P|\\
@@ -982,15 +997,15 @@ Otherwise the weight of the corresponding edge is increased and other routines a
 	\caption{updateDecomposition(a,b)}
 	\label{updateDecomposition}
 	\begin{algorithmic}
-		\STATE q$\leftarrow$ findSmallestSubgraph$(a,b)$
-		\WHILE{q not empty}
+		\STATE $q\leftarrow$ findSmallestSubgraph$(a,b)$
+		\WHILE{$q$ not empty}
 		\STATE current$\leftarrow$ q.popFront()
-		\IF{res.connectivity==alpha}
+		\IF{res.connectivity==$\alpha$}
 		\STATE continue
 		\ENDIF
 		\STATE res$\leftarrow$ decompose(current, current.connectivity+1)//decomposition based on $(s,t)$-cuts
 		\STATE current.connectivity $\leftarrow$ value of smallest encountered cut
-		\IF {current.connectivity$\geq$alpha}
+		\IF {current.connectivity$\geq\alpha$}
 		\STATE continue
 		\ENDIF
 		\STATE childrenQueue $\leftarrow$ res
@@ -1051,7 +1066,7 @@ Given a node $v$ of the decomposition tree, first a \textit{partition graph} is 
 
 We now run a \textit{maximum adjacency search} algorithm, sometimes also called \textit{maximum cardinality search} algorithm, (\cite{Stoer1997}) in order to obtain an arbitrary minimum $(s,t)$-cut of the graph.
 
-The maximum adjacency search algorithm is defined as follows: We start with an empty list $L$ to which we add an arbitrary node of $P$. We then continually add the most tightly connected node from $V$ to L, i.e. the node which is connected to the nodes in $L$ via edges of the most total weight. Stoer and Wagner (\cite{Stoer1997}) have shown that the edges between the last two nodes $s$ and $t$ added to $L$ form a minimum $(s,t)$-cut.
+The maximum adjacency search algorithm is defined as follows: We start with an empty list $L$ to which we add an arbitrary node of $P$. We then continually add the most tightly connected node from $V$ to $L$, i.e. the node which is connected to the nodes in $L$ via edges of the most total weight. Stoer and Wagner (\cite{Stoer1997}) have shown that the edges between the last two nodes $s$ and $t$ added to $L$ form a minimum $(s,t)$-cut.
 
 We use the value of this cut in order to decide whether to merge the nodes $s$ and $t$ or whether to separate them: if the cut has value less than $c$ we separate the nodes, otherwise we perform a merge.
 
@@ -1068,6 +1083,8 @@ In order to speed up this computation we use the heap data structure proposed an
 
 Thus we conclude that this procedure correctly decomposes a given subgraph as Chang et al. have also stated in Theorem 3.1 in \cite{Chang2013}.
 
+In the following section we show that this decomposition can be implemented in polynomial time.
+
 
 \subsection{Running Time}
 \label{run_time_sec}
@@ -1076,6 +1093,7 @@ In this section we discuss the polynomial running time of an update of the decom
 %\cref{run_time_theo} summarizes our result on the corresponding running time. 
 
 The main bottleneck of the algorithm lies in the decomposition updates. The following lemma shows a polynomial running time for these updates.
+The other parts of the algorithm can be implemented in polynomial time already.
 
 \begin{lemma}
 	\label{dec_run_time_lem}
@@ -1104,14 +1122,14 @@ We conclude our analysis of the running time by observing that the remaining sub
 	The algorithm \adjDel{} can be implemented in polynomial time.
 \end{theo}
 
-\textit{Proof.} The theorem follwos from the \cref{dec_run_time_lem} and the fact that the remaining subroutines can hence also be implemented in polynomial time. Note in particular that there can be at most one component deletion during the update step after any given request.\qed
+\textit{Proof.} The theorem follows from the \cref{dec_run_time_lem} and the fact that the remaining subroutines can hence also be implemented in polynomial time. Note in particular that there can be at most one component deletion during the update step after any given request.\qed%TODO list other subroutines
 
 
 
 \section{Evaluation}
 In this section we evaluate the quality of the results and the performance of our algorithm implementation by comparing it with several algorithms described in \cref{algSection} on input data sets described in \cref{inputDesc}.
 
-\subsection{Algorithms}
+\subsection{Reference Algorithms}
 \label{algSection}
 We first present the algorithms we compare in order to evaluate our results.
 
@@ -1221,6 +1239,8 @@ Also note that both algorithms pay generally more for migrations than for commun
 	]
 	\addplot table[x=database,y=AdjDel]{\commcostplot};
 	\addplot table[x=database,y=AdjDel]{\migcostplot};
+	
+	\node[anchor=north west] at (rel axis cs:0,1) {\adjDel{}};
 	%\legend{communication cost, migration cost}
 	\end{axis}
 	
@@ -1244,6 +1264,7 @@ Also note that both algorithms pay generally more for migrations than for commun
 	]
 	\addplot table[x=database,y=CoreDel]{\commcostplot};
 	\addplot table[x=database,y=CoreDel]{\migcostplot};
+	\node[anchor=north west] at (rel axis cs:0,1) {\coreDel{}};
 	\legend{communication cost, migration cost}
 	\end{axis}
 	\end{tikzpicture}
@@ -1393,6 +1414,7 @@ These improvements come at a cost of running time as \cref{runTimePlotCrep2A} sh
 	]
 	\addplot table[x=database,y=AdjDelDouble]{\commcostplotTwoAlpha};
 	\addplot table[x=database,y=AdjDelDouble]{\migcostplotTwoAlpha};
+	\node[anchor=north west] at (rel axis cs:0,1) {\adjDel{}};
 	%\legend{communication cost, migration cost}
 	\end{axis}
 	
@@ -1416,6 +1438,7 @@ These improvements come at a cost of running time as \cref{runTimePlotCrep2A} sh
 	]
 	\addplot table[x=database,y=CoreDelDouble]{\commcostplotTwoAlpha};
 	\addplot table[x=database,y=CoreDelDouble]{\migcostplotTwoAlpha};
+	\node[anchor=north west] at (rel axis cs:0,1) {\coreDel{}};
 	\legend{communication cost, migration cost}
 	\end{axis}
 	\end{tikzpicture}
@@ -1619,6 +1642,7 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	]
 	\addplot table[x=database,y=Adaptive]{\commcostplot};
 	\addplot table[x=database,y=Adaptive]{\migcostplot};
+	\node[anchor=north west] at (rel axis cs:0,1) {\adapt{}};
 	%\legend{communication cost, migration cost}
 	\end{axis}
 	
@@ -1642,6 +1666,7 @@ Both ParMetis as well as our decomposition algorithm produce significantly more 
 	]
 	\addplot table[x=database,y=Static]{\commcostplot};
 	\addplot table[x=database,y=Static]{\migcostplot};
+	\node[anchor=north west] at (rel axis cs:0,1) {\static{}};
 	\legend{communication cost, migration cost}
 	\end{axis}
 	\end{tikzpicture}
