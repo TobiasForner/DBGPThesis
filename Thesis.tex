@@ -41,6 +41,7 @@
 \newcommand{\crep}{\text{C{\scriptsize REP}}}
 \newcommand{\size}{\text{\scriptsize SIZE}}
 \newcommand{\optmig}{\text{\scriptsize OPT-MIG}}
+\newcommand{\optreq}{\text{\scriptsize OPT-REQ}}
 \newcommand{\del}{\text{\scriptsize DEL}}
 \newcommand{\ovr}{\text{\scriptsize OVR}}
 \newcommand{\final}{\text{\scriptsize FINAL}}
@@ -708,7 +709,7 @@ The requests from $\mathcal{H}=\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that are 
 
 Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
 
-We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from $\mathcal{H}$ which \crep{} pays for but \opt{} does not. We denote the requests in question by $N$, i.e. those from $N=\mathcal{H}\backslash P$. Note that $\mathcal{H}$ only contains requests which \crep{} payed for due to the definition of $\halo(C)$.
+We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from $\mathcal{H}$ which \crep{} pays for but \opt{} does not. We denote the set of these requests by $N$, i.e. $N=\mathcal{H}\backslash P$. Note that $\mathcal{H}$ only contains requests which \crep{} payed for due to the definition of $\halo(C)$.
 
 
 \begin{lemma}
@@ -722,7 +723,42 @@ The number of such nodes is hence limited by the server capacity $k$. As we only
 
 Let $R(C)$ denote the set of requests from $\halo(C)$ that were not assigned to any offline interval for a deleted component $C\in\del(\sigma)$.
 
-We continue the analysis of the lower bound on \opt{} by bounding the cost of \opt{} due to requests we have not accounted for, namely those from $\core(C)$ and those from $R(C)$ for each deleted component $C$.
+We say that a migration of node $v$ at time $t$ in the solution of \opt{} is \textit{contained} in $\epoch(C)$ if $(v,t)\in\epoch(C)$.
+
+Let $\optmig(C)$ denote the cost of \opt{} due to migrations of nodes from component $C$ that are contained in $\epoch(C)$ and let $\optreq(C)$ denote the cost of \opt{} due to serving requests from $\core(C)$.
+
+We show the following lower bound on the cost of \opt{} for migrations from $\optmig(C)$ and requests from $\optreq(C)$ for all deleted components $C$.
+
+\begin{lemma}
+	\label{opt_c_mig_req_lemma}
+	\begin{align*}
+		\sum_{C\in\del(\sigma)}\optmig(C)+\optreq(C)\geq |C|/k\cdot\alpha+|R(C)|/k
+	\end{align*}
+\end{lemma}
+
+\textit{Proof.} For the following part of the proof we fix an arbitrary component $C\in\del{}(\sigma)$. Note that the nodes involved in requests from $R(C)$ were not moved by \opt{} during the processing of requests from $R(C)$ until the time of deletion of $C$ as otherwise they would be assigned to an offline interval.
+
+The number of nodes contained in $C$ or connected to $C$ via edges representing requests from $R$ is at least $|C|+|R(C)|/\alpha$ since requests from $R(C)$ have not led \crep{} to perform any migrations. Because of this fact \opt{} must have placed those nodes on at least $\frac{|C|+|R(C)|/\alpha}{k}$ different servers. As \opt{} does not pay for any requests from $R$ it follows that \opt{} must have placed the nodes from $C$ in $\frac{|C|+|R(C)|/\alpha}{k}$ different servers.
+
+We first examine the case in which \opt{} does not move any nodes from $C$ during $\epoch(C)$. In this case \opt{} must partition a graph containing the nodes from $C$ which are connected via edges representing the requests from $\core(C)$. As stated earlier \opt{} placed those nodes in $\frac{|C|+|R(C)|/\alpha}{k}$ different servers at time $\tau(C)$. As \crep{} merged component $C$ this graph is $\alpha$-connected and hence \cref{cut_lemma} gives that \opt{} has to cut at least edges of total weight $\frac{|C|+|R(C)|/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+|R(C)|/k$.
+
+For the more general case in which \opt{} may perform node migrations during $\epoch(C)$ we adapt the graph construction from above as follows: we add a vertex representing each (node, time) pair from $\epoch(C)$.
+We connect each (node, time) pair $p$ with edges of weight $\alpha$ to the pairs of the same node that represent the time step directly before and directly after $p$ (if they exist in the graph). These edges represent the fact that \opt{} may choose to migrate a node between any two time steps in $\epoch(C)$.
+Additionally we add an edge of weight one for each request $r=\{u,v\}$ from $\core(C)$ by connecting the nodes in the graph that represent the pairs $(u,t)$ and $(v,t)$, respectively. \opt{} once again has to partition this graph into $\frac{|C|+|R(C)|/\alpha}{k}$ parts.
+
+Note that we only added edges of weight $\alpha$ to the graph and hence this graph is also $\alpha$-connected. We conclude that once again \opt{} has to cut edges of weight at least $\frac{|C|+|R(C)|/\alpha}{k}\cdot\alpha=|C|/k\cdot\alpha+|R(C)|/k$.
+
+In both cases only edges representing either requests from $\optreq()$ or migrations from $\optmig(C)$ were cut.
+
+As the sets $core(C)$, $R(C)$ , $core(D)$ and $R(D)$ are disjoint per their definition we conclude that
+\begin{align*}
+\sum_{C\in\del(\sigma)}\optmig(C)+\optreq(C)\geq |C|/k\cdot\alpha+|R(C)|/k.
+\end{align*}
+\qed\nl
+
+\begin{comment}
+
+We continue the analysis of the lower bound on $\opt{}$ by bounding the cost of \opt{} due to requests we have not accounted for, namely those from $\core(C)$ and those from $R(C)$ for each deleted component $C$.
 
 \begin{lemma}
 	\label{core_r_lemma}
@@ -751,7 +787,9 @@ As the sets $core(C)$, $R(C)$ , $core(D)$ and $R(D)$ are disjoint per their defi
 \end{align*}
 \qed\nl
 
-In the following lemma we combine the results of the previous lemmas in order to bound the cost of \opt{}.
+\end{comment}
+
+In the following lemma we combine the results of the previous lemmas in order to bound the cost of \opt{} given input sequence $\sigma$, denoted by $\opt(\sigma)$.
 
 
 \begin{lemma}
@@ -762,12 +800,22 @@ In the following lemma we combine the results of the previous lemmas in order to
 	\end{align*}
 \end{lemma}
 
-\textit{Proof.} We combine the results from \cref{offl_int_lemma} and \cref{core_r_lemma}. Note that the cost from \cref{core_r_lemma} may contain migration costs. In this case the corresponding migrations represent the end of an offline interval. This gives us that
+\textit{Proof.} We combine the results from \cref{offl_int_lemma} and \cref{opt_c_mig_req_lemma}. Note that the cost from \cref{opt_c_mig_req_lemma} may contain migration costs. In this case the corresponding migrations represent the end of an offline interval. We denote the number of offline intervals by $o$. This gives us that
 
 \begin{align*}
-2\opt{}(\sigma)\geq\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k.
+2\opt{}(\sigma)\geq\sum_{C\in\del(\sigma)}\optmig(C)+\optreq(C)+ o\cdot\alpha+|P|
 \end{align*}
-as we account for each migration at most twice. Hence the lemma follows.\qed
+as we account for each migration at most twice.
+
+Consider that due to \cref{offl_int_lemma} we have the inequality $o\geq|N|/k$. Also note that $\mathcal{H}=N\uplus P$. Hence we obtain
+
+\begin{align*}
+2\opt{}(\sigma)&\geq\sum_{C\in\del(\sigma)}\optmig(C)+\optreq(C)+ o\cdot\alpha+|P|\\
+&\geq\sum_{C\in\del(\sigma)}|C|/k\cdot\alpha+|R(C)|/k+(|N|+|P|)/k\\
+&\geq \cdot\sum_{C\in\del{}(\sigma)}|C|/k\cdot\alpha+|\halo(C)|/k.
+\end{align*}
+
+This gives us the lemma.\qed
 
 \begin{comment}
 Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
@@ -1025,12 +1073,14 @@ Thus we conclude that this procedure correctly decomposes a given subgraph as Ch
 \label{run_time_sec}
 In this section we discuss the polynomial running time of an update of the decomposition tree after a new request has been received in our implementation of \adjDel{}.
 
-\cref{run_time_theo} summarizes our result on the corresponding running time. 
+%\cref{run_time_theo} summarizes our result on the corresponding running time. 
 
-\begin{theo}
-	\label{run_time_theo}
-	The deterministic algorithm \adjDel{} can be implemented in polynomial time $O(\alpha|V|^2|E|)$.
-\end{theo}
+The main bottleneck of the algorithm lies in the decomposition updates. The following lemma shows a polynomial running time for these updates.
+
+\begin{lemma}
+	\label{dec_run_time_lem}
+	The subroutine \textit{decompose} which decomposes a subgraph can be implemented in polynomial time $O(\alpha|V|^2|E|)$.
+\end{lemma}
 
 \textit{Proof.} The worst case is given when the whole tree has to be recomputed. We first discuss the time complexity of decomposing a single tree node $v$. Let the corresponding subgraph be denoted by $G_v=(V_v, E_v)$.
 Since each iteration of the subroutine \textit{decompose} performs at least one cut as long as the connectivity of the given graph is smaller than the current threshold $c$ we conclude that after at most $|V_v|$ iterations of decompose a correct decomposition is found. 
@@ -1045,7 +1095,16 @@ We now sum this complexity over the nodes for each connectivity level of the dec
 	\sum_{i=0}^{\alpha}\sum_{v\in \text{level}(i)}C_v\leq\sum_{i=0}^{\alpha}O(|V|^2|E|)\in O(\alpha|V|^2|E|).
 \end{align*}
 
-We conclude our analysis of the time complexity by observing the polynomial-time complexity of $O(\alpha|V|^2|E|)$.
+We conclude our analysis of the time complexity by observing the polynomial-time complexity of $O(\alpha|V|^2|E|)$.\qed\nl
+
+We conclude our analysis of the running time by observing that the remaining subroutines can be implemented in polynomial time which results in the following theorem on the running time.
+
+\begin{theo}
+	\label{run_time_theo}
+	The algorithm \adjDel{} can be implemented in polynomial time.
+\end{theo}
+
+\textit{Proof.} The theorem follwos from the \cref{dec_run_time_lem} and the fact that the remaining subroutines can hence also be implemented in polynomial time. Note in particular that there can be at most one component deletion during the update step after any given request.\qed
 
 
 
