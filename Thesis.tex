@@ -619,6 +619,14 @@ In the following lemma we establish the upper bound on the cut edge weight when 
 
 Now that we have defined some general notions and some fundamental properties we give an overview over the general approach we use in order to achieve an upper bound on \adjDel{}, a lower bound on \opt{} and finally the competitive ratio of \adjDel{}.
 
+As we have argued above the definition of \adjDel{} allows us to argue about each deleted component and the requests deleted during its deletion separately.
+
+Furthermore we know that a component deleted by \adjDel{} is both at least $\alpha$-connected as well as larger than $k$, i.e. its nodes must be spread across several servers in the solution of \opt{}. This allows assign significant cost to \opt{}.
+
+Additionally we also know by the definition of \crep{} that the edges that are reset because they are adjacent to $C$ can not be part of any component. We use this fact in \cref{offl_int_lemma} in order to show that the amount of such requests is at most $k\cdot\alpha$ for each migration performed by \opt{}.
+
+These are the main concepts we use in order to assign cost to \opt{} and to show the competitive ratio of \adjDel{}.
+
 
 \subsection{Upper Bound On \adjDel{}}
 
@@ -724,7 +732,70 @@ The requests from $\mathcal{H}=\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that are 
 
 Let $P$ denote the set of edges from $\bigcup_{C\in\del{}(\sigma)}\halo{}(C)$ that both \crep{} and \opt{} pay for and let $I$ denote the set of requests we have assigned to offline intervals.
 
+These definitions are illustrated in \cref{analysis_def_illustration}. Note that we only show some requests explicitly for the sake of readability. The grey horizontal lines represent the nodes at each time $t$. The red outline surrounds the (node,time) pairs of $\epoch(C)$. Blue dots mark migrations of the corresponding node performed by \opt{} while red dots mark deletions of the component the node was assigned to at that time. The dashed vertical lines in black mark requests that are assigned to another component because it is deleted before component $C$. The dotted green line is a request from $\halo(C)$ assigned to the offline interval of node 5 between the two blue dots. The regular green lines are assigned to an offline interval which is not contained in $\epoch(C)$. We define this concept more formally at a later point in the analysis. The lines in magenta are sample requests from $\core(C)$.
+
 We start by bounding the total edge weight (the total number of requests) we assign to any one offline interval when limiting ourselves to requests from $\mathcal{H}$ which \crep{} pays for but \opt{} does not. We denote the set of these requests by $N$, i.e. $N=\mathcal{H}\backslash P$. Note that $\mathcal{H}$ only contains requests which \crep{} payed for due to the definition of $\halo(C)$.
+
+\begin{center}
+	\begin{figure}
+		\begin{tikzpicture}
+		
+		%axis
+		\draw [<->] (1,6) -- (1,-2) -- (14,-2);
+		\node [left, black] at (1,-1) {1};
+		\node [left, black] at (1,0) {2};
+		\node [left, black] at (1,1) {3};
+		\node [left, black] at (1,2) {4};
+		\node [left, black] at (1,3) {5};
+		\node [left, black] at (1,4) {6};
+		\node [left, black] at (1,5) {7};
+		\node [left, black] at (1.5,6.5) {nodes};
+		\node [below, black] at (14,-2) {time};
+		
+		
+		%horizontal lines
+		\draw [gray] (1,-1) -- (14,-1);
+		\draw [gray] (1,0) -- (14,0);
+		\draw [gray] (1,1) -- (14,1);
+		\draw [gray] (1,2) -- (14,2);
+		\draw [gray] (1,3) -- (14,3);
+		\draw [gray] (1,4) -- (14,4);
+		\draw [gray] (1,5) -- (14,5);
+		
+		%red component outline
+		\draw [red] (3,5.5) -- (3,2.5) -- (6,2.5) -- (6,1.5) -- (4,1.5) -- (4,0.5) -- (12,0.5) -- (12,5.5) -- (3,5.5);
+		
+		%core(C) edges
+		\draw [magenta] (4,3) -- (4,5);
+		\draw [magenta] (10,1) -- (10,3);
+		\draw [magenta] (11,2) -- (11,5);
+		
+		
+		%blue points for opt migrations	
+		\draw [fill,blue] (8,3) circle [radius=0.1];
+		\draw [fill,blue] (2,3) circle [radius=0.1];		
+
+		
+		%green request lines for halo
+		\draw [green] (9,3) -- (9,-1);
+		\draw [green] (9.5,3) -- (9.5,0);
+		
+		
+		%dashed green request lines for those assigned to an offline interval
+		\draw [green, dotted, ultra thick] (7.5,3) -- (7.5,0);
+		
+		
+		%red dots for deletions of other components by crep
+		\draw [fill,red] (7,-1) circle [radius=0.1];
+		
+		%dashed black lines for requests assigned to other component
+		\draw [black, dashed] (6,1) -- (6,-1);
+		\draw [black, dashed] (5,3) -- (5,-1);
+		
+		\end{tikzpicture}
+		\caption{illustration of definitions used in the analysis}\label{analysis_def_illustration}
+	\end{figure}
+\end{center}
 
 
 \begin{lemma}
