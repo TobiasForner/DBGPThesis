@@ -324,12 +324,14 @@
 	
 	\subsection{Fast Algorithms and Heuristics}
 	
-	There are several algorithms and frameworks for graph partitioning problems.
+	There are several algorithms and frameworks for graph partitioning problems. Usually these frameworks employ heuristics in order to achieve their results. The most successful such heuristic is \textit{Multilevel Graph Partitioning} (\cite{Buluc2016}). This methods consists of three phases: initially the graph is repeatedly coarsened into a hierarchy of smaller graphs in such a way that cuts in the coarse graphs also correspond to cuts in the finer graphs. On the coarsest level a (potentially expensive) algorithm is used in order to compute an initial partition. This partitioning is then transferred to the finer graphs. In this process one usually uses other local heuristics in order to improve the partition quality even further with every step.
+	
+	METIS (\cite{Karypis1998, Karypis1998a}) and Jostle (\cite{Walshaw2000, walshaw2007jostle}) are examples of a libraries that utilizes this multilevel approach. We choose METIS as a reference for our empirical evaluation.
 	
 	
 	\section{Algorithmic Ideas}
 	\label{algIdeas}
-	In this section we describe two different solution approaches to the Dynamic Balanced Graph Partitioning problem. We call these approaches \coreDel{} and \nl\adjDel{} that are inspired by the versions of the \crep{} algorithm in \cite{Avin2015} and \cite{Avin2016}. We first describe the general approach that is common to both algorithms and then address the specific differences and analysis ideas.
+	In this section we describe two different solution approaches to the Dynamic Balanced Graph Partitioning problem. We call these approaches \coreDel{} and \nl\adjDel{}. Both approaches are inspired by the versions of the \crep{} algorithm in \cite{Avin2015} and \cite{Avin2016}. We first describe the general approach that is common to both algorithms and then address the specific differences and analysis ideas.
 	
 	Both methods share a similar concept at their core: a second-order partitioning of the communication nodes into \textit{communication components} which represent node-induced sub-graphs of the original communication graph given by the requests from the input sequence $\sigma$. As more requests from $\sigma$ are revealed to the algorithms they merge the corresponding components once they are suitably connected and relocate the nodes of the new component in such a way that all the nodes of a component are always located on the same server.
 	
