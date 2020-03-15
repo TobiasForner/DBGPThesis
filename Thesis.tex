@@ -214,7 +214,20 @@
 	
 	\subsection{Organization}
 	
+	We first introduce general definitions and notation in \cref{gen_def_section} which we will use throughout this thesis. 
+	We then formally introduce the Dynamic Balanced Graph Partitioning (DBGP) problem in \cref{problem_definition_section}. 
+	In \cref{related_work_section} we discuss previous work related to the DBGP problem. After that we discuss two algorithmic ideas, denoted by \adjDel{} and \coreDel{}, which are inspired by prior work (\cite{Avin2015, Avin2016}) and the respective implications and challenges for their competitive analysis. 
+	In \cref{comp_analysis_section} we show the competitive ratio of $O(2/\epsilon\cdot k\log k)$ for the algorithm \adjDel{}.
+	Then we discuss our implementation of \adjDel{} and show that the algorithm can be implemented in polynomial time in \cref{implDetSection}.
+	Then we empirically evaluate our algorithms by comparing their results with those of existing implementations in \cref{evaluation_section}.
+	We summarize the results of this thesis in \cref{conclusion_section}.
+	Finally we describe avenues for future work in \cref{future_work_section}.
+	
+	
+	
 	\section{General Definitions and Notation}
+	
+	\label{gen_def_section}
 	
 	In this section we introduce several definitions and notations that will be used throughout the thesis.
 	
@@ -230,6 +243,7 @@
 	
 	
 	\section{Problem Definition}
+	\label{problem_definition_section}
 	
 	Avin et al. (\cite{Avin2016}) first introduced the Dynamic Balanced Graph Partitioning problem under the name of \textit{Balanced RePartitioning} (BRP) problem, but changed the name to the former in a more recent version of their paper (\cite{Avin2015}).
 	
@@ -252,6 +266,7 @@
 	We allow the online algorithm to use larger capacities per server. In this case we speak of an \textit{augmentation} of $\delta$ in the case where the online algorithm is allowed to assign $\delta\cdot n/k$ nodes to each server where $\delta>1$. This augmented online algorithm is than compared with the optimal offline algorithm \opt{} which is not allowed to use any augmentation.
 	
 	\section{Related Work}
+	\label{related_work_section}
 	
 	With the ever increasing importance of distributed computation systems also come new challenges. One such challenge is an increase in network traffic. This increased network load may impact the performance of cloud computing networks significantly and should hence be minimized. For example studies (\cite{Ghobadi2016, Hamedazimi2014}) have shown that reconfigurable datacenter networks can provide performance similar to regular datacenter networks while having significantly lower cost in some cases.
 	
@@ -308,6 +323,8 @@
 	This problem is NP-complete (\cite{Andreev2006}) and for the case where $l\geq 3$, Andreev and R\"acke (\cite{Andreev2006}) have shown that there is no polynomial time approximation algorithm which guarantees a finite approximation factor unless P=NP.
 	
 	\subsection{Fast Algorithms and Heuristics}
+	
+	There are several algorithms and frameworks for graph partitioning problems.
 	
 	
 	\section{Algorithmic Ideas}
@@ -537,6 +554,7 @@
 	
 
 \section{Competitive Analysis of \adjDel{}}
+\label{comp_analysis_section}
 For the sake of this analysis we examine the \adjDel{} algorithm from \cref{algIdeas} and name the algorithm \crep{} from now on.
 
 We analyse the competitive ratio of \crep{} with augmentation $(2+\epsilon)$ and show in \cref{comp_ratio_theo} that \crep{} is $O(2/\epsilon\cdot k\log k)$-competitive.
@@ -625,7 +643,7 @@ Furthermore we know that a component deleted by \adjDel{} is both at least $\alp
 
 Additionally we also know by the definition of \crep{} that the edges that are reset because they are adjacent to $C$ can not be part of any component. We use this fact in \cref{offl_int_lemma} in order to show that the amount of such requests is at most $k\cdot\alpha$ for each migration performed by \opt{}.
 
-These are the main concepts we use in order to assign cost to \opt{} and to show the competitive ratio of \adjDel{}.
+These are the main concepts we use in order to bound the cost of \adjDel{} and to assign cost to \opt{}in the following sections. In \cref{comp_ratio_theo} we finally show the competitive ratio of \adjDel{} .
 
 
 \subsection{Upper Bound On \adjDel{}}
@@ -1198,6 +1216,8 @@ We conclude our analysis of the running time by observing that the remaining sub
 
 
 \section{Evaluation}
+\label{evaluation_section}
+
 In this section we evaluate the quality of the results and the performance of our algorithm implementation by comparing it with several algorithms described in \cref{algSection} on input data sets described in \cref{inputDesc}.
 
 \subsection{Reference Algorithms}
@@ -1860,6 +1880,8 @@ Finally \cref{runTimePlotMetis} illustrates the run times of \adapt{} and \stati
 %\clearpage
 
 \section{Conclusion}
+\label{conclusion_section}
+
 We have discussed different ideas for component-based algorithms for the Dynamic Balanced Graph Partitioning Problem as well as the corresponding implications and challenges for the competitive analysis. 
 
 We have shown that our algorithm \adjDel{} has a competitive ratio of $O(2/\epsilon\cdot k\log k)$ and we have presented our decomposition-based approach to its implementation. 
@@ -1867,6 +1889,8 @@ We have shown that our algorithm \adjDel{} has a competitive ratio of $O(2/\epsi
 Finally we have evaluated the results of our implementation by comparing it with three other algorithms: \coreDel{} which is a variation of \adjDel{} which deletes fewer edges and \adapt{} and \static{} which are available via METIS and ParMETIS frameworks, respectively. Furthermore we have explored the possibility of making slight adaptations of our algorithms in order to improve their results.
 
 \section{Future Work}
+\label{future_work_section}
+
 Even though we have already shown very promising results as to the overall performance of our algorithms together with theoretical guarantees there are still areas in which our work could be expanded upon.
 
 As discussed in \cref{alphaInf} we see great potential in making adjustments to our algorithms, especially \coreDel{}, in order to improve their results even further while also preserving our result on the competitive ratio.
