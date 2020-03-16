@@ -1073,7 +1073,7 @@ In the next section we provide more detailed pseudocode describing our implement
 		\ENDIF
 		\STATE addEdge($a,b$)
 		\STATE updateDecomposition$(a,b)$
-		\STATE del$\leftarrow$ updateMapping$(alphaConnectedComponents)$
+		\STATE $del\leftarrow$ updateMapping$(alphaConnectedComponents)$
 		\STATE delComponents$(del)$
 	\end{algorithmic}
 \end{algorithm}
@@ -1091,27 +1091,27 @@ Otherwise the weight of the corresponding edge is increased and other routines a
 		\STATE $q\leftarrow$ findSmallestSubgraph$(a,b)$
 		\WHILE{$q$ not empty}
 		\STATE current$\leftarrow$ $q$.popFront()
-		\IF{res.connectivity==$\alpha$}
+		\IF{$res$.connectivity==$\alpha$}
 		\STATE continue
 		\ENDIF
-		\STATE res$\leftarrow$ decompose(current, current.connectivity+1)//decomposition based on $(s,t)$-cuts
+		\STATE $res\leftarrow$ decompose(current, current.connectivity+1)//decomposition based on $(s,t)$-cuts
 		\STATE current.connectivity $\leftarrow$ value of smallest encountered cut
 		\IF {current.connectivity$\geq\alpha$}
 		\STATE continue
 		\ENDIF
-		\STATE childrenQueue $\leftarrow$ res
+		\STATE childrenQueue $\leftarrow res$
 		\STATE //make sure that only subgraphs with higher connectivity are added as children
 		\WHILE{childrenQueue not empty}
 		\STATE $c\leftarrow$childrenQueue.pop()
-		\STATE cRes$\leftarrow$decompose(c, current.connectivity+1)
+		\STATE $cRes\leftarrow$decompose($c$, current.connectivity+1)
 		\STATE $c$.connectivity $\leftarrow$ value of smallest encountered cut
 		\IF{decompose returned only one graph}
-		\STATE current.children.add(cRes)
-		\IF{cRes has connectivity smaller than alpha}
-		\STATE $q$.push(cRes)
+		\STATE current.children.add($cRes$)
+		\IF{$cRes$ has connectivity smaller than $\alpha$}
+		\STATE $q$.push($cRes$)
 		\ENDIF
 		\ELSE
-		\STATE childrenQueue.add(cRes)
+		\STATE childrenQueue.add($cRes$)
 		\ENDIF
 		\ENDWHILE
 		\ENDWHILE
@@ -1129,10 +1129,10 @@ In the case of a collocation the nodes are moved to a cluster that has enough sp
 
 
 \begin{algorithm}
-	\caption{delComponents(del)}
+	\caption{delComponents($del$)}
 	\label{delComponents}
 	\begin{algorithmic}
-		\STATE delAllEdges(del)
+		\STATE delAllEdges($del$)
 		\STATE root.connectivity=0
 		\STATE root.children=\{\}
 		\STATE updateDecomposition(0,1)
