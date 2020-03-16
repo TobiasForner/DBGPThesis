@@ -1,4 +1,4 @@
-# DBGPThesis
+# Polynomial Time Competitive Repartitioning of Dynamic Graphs
 
 This is the code accompanying my Bachelor's Thesis in Informatics, *Polynomial Time Competitive Repartitioning of Dynamic Graphs* at TU Munich.
 
