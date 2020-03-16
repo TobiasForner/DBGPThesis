@@ -3,9 +3,7 @@
 This is the code accompanying my Bachelor's Thesis in Informatics, *Polynomial Time Competitive Repartitioning of Dynamic Graphs* at TU Munich.
 
 
-# Code
-
-# Graph Decomposition Tree based on Connectivity
+# Code: Graph Decomposition Tree based on Connectivity
 
 Code for dynamically maintaining a connectivity-based graph decomposition tree.
 
